@@ -8,10 +8,23 @@ Laravel 13 + Inertia 3 + React 19 + TypeScript 5 + Tailwind 4.
 
 ## Prerequisites
 
-- PHP 8.4 or newer with `pdo_pgsql`, `zip`, `fileinfo`, `intl` extensions
+- PHP 8.4 or newer with `pdo_pgsql`, `pdo_sqlite`, `zip`, `fileinfo`, `intl` extensions
 - Composer 2
 - Node.js 20.19+ and pnpm 10
 - Docker Desktop (for PostgreSQL/PostGIS and the local object store)
+
+Some Windows PHP installs ship with the required extensions present but
+commented out in `php.ini`. `tools/php-local.ini` enables them without touching
+the system install. To have every child process (Composer scripts, Artisan's
+test runner, Vite's Wayfinder plugin) pick it up, put the shim on your PATH for
+the session:
+
+```powershell
+$env:Path = "$PWD\tools\phpshim;$env:Path"
+```
+
+If `php artisan test` fails with "could not find driver", that PATH entry is
+missing — the test runner spawns a second `php` binary for each test process.
 
 ## Local setup
 

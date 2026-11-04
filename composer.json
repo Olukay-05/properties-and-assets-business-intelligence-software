@@ -67,7 +67,7 @@
             "pint --parallel --test"
         ],
         "types:transform": [
-            "@php artisan typescript:transform"
+            "@php artisan types:transform"
         ],
         "ci:check": [
             "Composer\\Config::disableProcessTimeout",
