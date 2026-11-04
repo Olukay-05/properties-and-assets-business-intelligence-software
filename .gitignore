@@ -56,9 +56,15 @@ yarn-error.log
 /tools/phpshim
 
 # Agent tooling installed locally by the starter kit and the AI harness. The
-# canonical copies live in .agents/skills and _bmad; these are per-tool mirrors
+# canonical BMAD skills live in _bmad; these directories are per-tool mirrors
 # that would otherwise flood the repository with thousands of duplicated files.
-/.agent
+#
+# Listed explicitly (both singular and plural spellings) rather than relying on
+# a parent-directory rule, so the intent survives reorganising these folders.
+/.agent/skill
+/.agent/skills
+/.agents/skill
+/.agents/skills
 /.qoder
 /.qwen
 /.opencode
