@@ -1,0 +1,11 @@
+[agent]
+persistent_facts = [
+  "Before handing off a completed project brief, run the Phase 1 Architecture Auditor scope check and record flags in _bmad-output/arch-audit/flag-registry.md.",
+  "Leave the brief in draft when user-owned P0 flags are open; direct the user to arch-audit-resolve.",
+]
+
+[[agent.menu_items]]
+code = "AA"
+label = "Architecture Audit (Brief)"
+description = "Run the Phase 1 scope audit and create/update the flag registry."
+instruction = "Review scope, frontend/backend boundary, data sensitivity, role model, AI/cost risk, and concurrency. Record P0/P1/P2 flags with owners and target artifacts; do not approve a brief that retains user-owned P0 flags."

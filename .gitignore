@@ -1,0 +1,68 @@
+/.phpunit.cache
+/bootstrap/ssr
+/node_modules
+/public/build
+/public/fonts-manifest.dev.json
+/public/hot
+/public/storage
+/storage/*.key
+/storage/pail
+/resources/js/actions
+/resources/js/routes
+/resources/js/wayfinder
+/vendor
+.DS_Store
+.env
+.env.backup
+.env.production
+.phpactor.json
+.phpunit.result.cache
+Homestead.json
+Homestead.yaml
+npm-debug.log
+yarn-error.log
+/auth.json
+/.fleet
+/.idea
+/.nova
+/.vscode
+/.zed
+/.agents
+/.amp
+/.claude
+/.codex
+/.cursor
+/.factory
+/.grok
+/.junie
+/.kiro
+/.pi
+/.mcp.json
+/CLAUDE.md
+/boost.json
+/opencode.json
+/opencode.jsonc
+
+# Generated from PHP Data classes by `php artisan types:transform`. Build
+# artifact: regenerate rather than commit, so the PHP classes stay the single
+# source of truth for the PHP <-> TypeScript contract.
+/resources/js/types/generated/*
+!/resources/js/types/generated/.gitkeep
+
+# Local tooling and scratch work
+/.scratch
+/.acl-recovery
+/.pnpm-store
+/tools/phpshim
+
+# Agent tooling installed locally by the starter kit and the AI harness. The
+# canonical copies live in .agents/skills and _bmad; these are per-tool mirrors
+# that would otherwise flood the repository with thousands of duplicated files.
+/.agent
+/.qoder
+/.qwen
+/.opencode
+
+# Starter-kit installer scripts, consumed at scaffold time and no longer used.
+/chisel.php
+/chisel-paths.php

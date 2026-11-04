@@ -1,0 +1,320 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cloud Crafters — Editorial Intelligence Design System</title>
+<link rel="stylesheet" href="cloud-crafters-design-system.css">
+<style>
+body{margin:0;background:#f2f4f6;color:#14243a}.preview-shell{max-width:1440px;margin:0 auto;padding:28px 24px 64px}.preview-top{display:flex;justify-content:space-between;align-items:center;gap:20px;margin-bottom:20px;font:700 13px Arial,sans-serif;color:#5f6f82}.brand{color:#17365d;letter-spacing:.04em}.preview-page{max-width:1120px;margin:auto;box-shadow:0 2px 14px rgba(20,36,58,.06)}.demo-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px}.swatches{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}.swatch{border:1px solid #c7d1dc}.swatch-color{height:46px}.swatch-label{padding:7px;font:12px Arial,sans-serif;color:#14243a;background:white}.demo-label{font:700 11px Arial,sans-serif;text-transform:uppercase;letter-spacing:.08em;color:#7b8794;margin-bottom:10px}.button-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}.token-list{display:grid;grid-template-columns:1fr auto;gap:8px 14px;font:13px Arial,sans-serif}.token-list span:nth-child(odd){color:#5f6f82}.token-list span:nth-child(even){font-weight:700;color:#17365d}.preview-footer{border-top:1px solid #c7d1dc;margin-top:48px;padding-top:14px;color:#5f6f82;font:12px Georgia,serif}@media(max-width:760px){.preview-shell{padding:10px}.demo-grid{grid-template-columns:1fr}.swatches{grid-template-columns:repeat(2,1fr)}.preview-page{box-shadow:none}}
+</style>
+</head>
+<body class="cc-theme">
+<div class="preview-shell">
+  <div class="preview-top"><span class="brand">CLOUD CRAFTERS TECHNOLOGIES</span><span>DESIGN SYSTEM / VERSION 1.0</span></div>
+  <main class="cc-page preview-page">
+    <div class="cc-stack" style="gap:14px">
+      <div class="cc-kicker">PRODUCT EXPERIENCE / PROPERTY &amp; ASSET INTELLIGENCE</div>
+      <h1>Make every managed property and asset accountable.</h1>
+      <div class="cc-rule"></div>
+      <div class="cc-subtitle">An editorial design language for clear, operational business software</div>
+      <div class="cc-meta">Cloud Crafters Technologies · Design principles and reusable interface components</div>
+    </div>
+
+    <section class="cc-section">
+      <div class="cc-callout">
+        <div class="cc-callout__label">THE DESIGN PRINCIPLE</div>
+        <div class="cc-callout__body">Build interfaces that feel as credible and readable as a well-produced strategy report. Use colour to organise information, not decorate it.</div>
+      </div>
+    </section>
+
+    <section class="cc-section">
+      <h2>Colour palette</h2>
+      <p>White canvas, deep navy structure, blue hierarchy and teal emphasis. The supporting tints keep tables and operational states readable without visual noise.</p>
+      <div class="swatches">
+        <div class="swatch"><div class="swatch-color" style="background:#14243A"></div><div class="swatch-label">Ink navy<br>#14243A</div></div>
+        <div class="swatch"><div class="swatch-color" style="background:#17365D"></div><div class="swatch-label">Heading navy<br>#17365D</div></div>
+        <div class="swatch"><div class="swatch-color" style="background:#4F81BD"></div><div class="swatch-label">Editorial blue<br>#4F81BD</div></div>
+        <div class="swatch"><div class="swatch-color" style="background:#168C88"></div><div class="swatch-label">Accent teal<br>#168C88</div></div>
+        <div class="swatch"><div class="swatch-color" style="background:#EAF3F4"></div><div class="swatch-label">Pale teal<br>#EAF3F4</div></div>
+      </div>
+    </section>
+
+    <section class="cc-section">
+      <h2>Typography and hierarchy</h2>
+      <div class="demo-grid">
+        <div class="cc-stack">
+          <div class="demo-label">Display title · Arial bold · Navy</div>
+          <h1 style="font-size:36px">A clear view of every site.</h1>
+          <div class="cc-rule"></div>
+          <div class="demo-label">Subtitle · Arial italic · Blue</div>
+          <div class="cc-subtitle">Portfolio operations, made visible.</div>
+        </div>
+        <div class="cc-stack">
+          <div class="demo-label">Section heading · Arial bold · Blue</div>
+          <h2>Executive summary</h2>
+          <div class="demo-label">Body copy · Georgia · Navy</div>
+          <p>Know which properties are being serviced, which assets are on each site, who is responsible and what work remains outstanding.</p>
+          <div class="demo-label">Kicker · Georgia bold · Teal</div>
+          <div class="cc-kicker">OPERATIONS / PORTFOLIO CONTROL</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="cc-section">
+      <h2>Recommendation callout</h2>
+      <div class="cc-callout">
+        <div class="cc-callout__label">THE RECOMMENDED ACTION</div>
+        <div class="cc-callout__body">Keep every property, registered asset, inspection and maintenance job connected to the site it belongs to. Show a clear history of responsibility and completed work.</div>
+      </div>
+    </section>
+
+    <section class="cc-section">
+      <h2>Tables</h2>
+      <p>Formal table styling is a defining pattern: dark header, white type, thin gridlines and alternating pale rows.</p>
+      <div class="cc-table-wrap">
+        <table class="cc-table">
+          <caption>Example operational portfolio register · illustrative data</caption>
+          <thead><tr><th>Property / site</th><th>Registered assets</th><th>Open work orders</th><th>Condition review</th></tr></thead>
+          <tbody>
+            <tr><td>Victoria Island Office</td><td>42</td><td>3</td><td><span class="cc-status cc-status--success">Up to date</span></td></tr>
+            <tr><td>Ikeja Distribution Hub</td><td>68</td><td>7</td><td><span class="cc-status cc-status--warning">Due soon</span></td></tr>
+            <tr><td>Lekki Service Centre</td><td>24</td><td>2</td><td><span class="cc-status cc-status--danger">Overdue</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="cc-section">
+      <h2>Cards and information hierarchy</h2>
+      <div class="demo-grid">
+        <div class="cc-card cc-stack">
+          <div class="cc-card__eyebrow">REGISTERED ASSETS</div>
+          <div class="cc-card__value">1,284</div>
+          <div class="cc-card__note">Across 18 managed sites</div>
+        </div>
+        <div class="cc-card cc-card--emphasis cc-stack">
+          <div class="cc-card__eyebrow">OPEN WORK ORDERS</div>
+          <div class="cc-card__value">36</div>
+          <div class="cc-card__note">11 are due within the next 7 days</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="cc-section">
+      <h2>Buttons and actions</h2>
+      <p>Button hierarchy follows the report's navy and blue palette. Use teal sparingly for a positive confirm action.</p>
+      <div class="button-row">
+        <button class="cc-button cc-button--primary">Create work order</button>
+        <button class="cc-button cc-button--secondary">View details</button>
+        <button class="cc-button cc-button--teal">Mark complete</button>
+        <button class="cc-button cc-button--text">Cancel</button>
+        <button class="cc-button cc-button--primary" disabled>Unavailable</button>
+      </div>
+    </section>
+
+    <section class="cc-section">
+      <h2>Form fields and dropdowns</h2>
+      <p>Forms support both <strong>enhanced native selects</strong> (for standard choices and zero-JS mobile resilience) and <strong>editorial custom dropdowns</strong> (when options require rich metadata and status indicators).</p>
+      
+      <div class="demo-grid">
+        <label class="cc-field">
+          <span class="cc-label">Property name</span>
+          <input class="cc-input" placeholder="Enter property or site name">
+          <span class="cc-hint">Use the name field teams recognise.</span>
+        </label>
+
+        <label class="cc-field">
+          <span class="cc-label">Maintenance priority · Native select</span>
+          <select class="cc-select">
+            <option value="">Select priority</option>
+            <option value="low">Low priority</option>
+            <option value="normal" selected>Normal priority</option>
+            <option value="high">High priority</option>
+            <option value="critical">Critical priority</option>
+          </select>
+          <span class="cc-hint">Polished pure-CSS trigger with custom brand chevron and native OS picker.</span>
+        </label>
+      </div>
+
+      <div class="demo-grid" style="margin-top:12px">
+        <div class="cc-field">
+          <span class="cc-label">Asset condition review · Custom editorial dropdown</span>
+          <div class="cc-dropdown" data-dropdown id="demo-condition-dropdown">
+            <button class="cc-dropdown__trigger" type="button" aria-haspopup="listbox" aria-expanded="false" aria-label="Asset condition review">
+              <span class="cc-dropdown__value">
+                <span>Due soon</span>
+                <span class="cc-status cc-status--warning">Due soon</span>
+              </span>
+              <svg class="cc-dropdown__arrow" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="m6 9 6 6 6-6"/>
+              </svg>
+            </button>
+            <ul class="cc-dropdown__menu" role="listbox" tabindex="-1">
+              <li class="cc-dropdown__item" role="option" tabindex="0" aria-selected="false" data-value="verified">
+                <div class="cc-dropdown__item-content">
+                  <span class="cc-dropdown__item-title">Up to date</span>
+                  <span class="cc-dropdown__item-sub">Verified in Q3 physical inspection</span>
+                </div>
+                <span class="cc-status cc-status--success">Up to date</span>
+              </li>
+              <li class="cc-dropdown__item is-selected" role="option" tabindex="0" aria-selected="true" data-value="due-soon">
+                <div class="cc-dropdown__item-content">
+                  <span class="cc-dropdown__item-title">Due soon</span>
+                  <span class="cc-dropdown__item-sub">Inspection window opens in 7 days</span>
+                </div>
+                <span class="cc-status cc-status--warning">Due soon</span>
+              </li>
+              <li class="cc-dropdown__item" role="option" tabindex="0" aria-selected="false" data-value="overdue">
+                <div class="cc-dropdown__item-content">
+                  <span class="cc-dropdown__item-title">Overdue</span>
+                  <span class="cc-dropdown__item-sub">Immediate site review required</span>
+                </div>
+                <span class="cc-status cc-status--danger">Overdue</span>
+              </li>
+              <li class="cc-dropdown__item" role="option" tabindex="0" aria-selected="false" data-value="in-review">
+                <div class="cc-dropdown__item-content">
+                  <span class="cc-dropdown__item-title">In review</span>
+                  <span class="cc-dropdown__item-sub">Awaiting facilities manager sign-off</span>
+                </div>
+                <span class="cc-status cc-status--info">In review</span>
+              </li>
+            </ul>
+          </div>
+          <span class="cc-hint">Fully styled popover with editorial typography, keyboard navigation and status tags.</span>
+        </div>
+
+        <label class="cc-field">
+          <span class="cc-label">Custodian assignment · Disabled select</span>
+          <select class="cc-select" disabled>
+            <option>Regional Facilities Lead (Locked)</option>
+          </select>
+          <span class="cc-hint">Demonstrates restrained contrast and disabled indicator.</span>
+        </label>
+      </div>
+    </section>
+
+    <section class="cc-section">
+      <h2>Status and navigation</h2>
+      <div class="cc-row">
+        <span class="cc-status cc-status--success">Verified</span>
+        <span class="cc-status cc-status--warning">Due soon</span>
+        <span class="cc-status cc-status--danger">Overdue</span>
+        <span class="cc-status cc-status--info">In review</span>
+        <span class="cc-status cc-status--neutral">Draft</span>
+      </div>
+      <div class="cc-tabs" role="tablist" aria-label="Example sections">
+        <button class="cc-tab" role="tab" aria-selected="true">Overview</button>
+        <button class="cc-tab" role="tab" aria-selected="false">Assets</button>
+        <button class="cc-tab" role="tab" aria-selected="false">Inspections</button>
+        <button class="cc-tab" role="tab" aria-selected="false">Maintenance</button>
+      </div>
+      <div class="cc-row">
+        <a class="cc-page-link" href="#" aria-label="Previous page">‹</a>
+        <a class="cc-page-link" href="#" aria-current="page">1</a>
+        <a class="cc-page-link" href="#">2</a>
+        <a class="cc-page-link" href="#">3</a>
+        <a class="cc-page-link" href="#" aria-label="Next page">›</a>
+      </div>
+    </section>
+
+    <div class="preview-footer">CLOUD CRAFTERS TECHNOLOGIES · EDITORIAL INTELLIGENCE DESIGN SYSTEM · v1.0</div>
+  </main>
+</div>
+
+<script>
+  // Cloud Crafters Editorial Intelligence — Accessible Dropdown Interaction
+  document.querySelectorAll('[data-dropdown]').forEach(dropdown => {
+    const trigger = dropdown.querySelector('.cc-dropdown__trigger');
+    const menu = dropdown.querySelector('.cc-dropdown__menu');
+    const items = Array.from(dropdown.querySelectorAll('.cc-dropdown__item'));
+    const valueEl = dropdown.querySelector('.cc-dropdown__value');
+
+    function toggle(open) {
+      const willOpen = typeof open === 'boolean' ? open : !dropdown.classList.contains('is-open');
+      dropdown.classList.toggle('is-open', willOpen);
+      trigger.setAttribute('aria-expanded', String(willOpen));
+      
+      if (willOpen) {
+        const selected = dropdown.querySelector('.cc-dropdown__item.is-selected') || items[0];
+        if (selected) {
+          selected.focus();
+        }
+      }
+    }
+
+    function selectItem(item) {
+      items.forEach(i => {
+        i.setAttribute('aria-selected', 'false');
+        i.classList.remove('is-selected');
+      });
+      item.setAttribute('aria-selected', 'true');
+      item.classList.add('is-selected');
+
+      const titleEl = item.querySelector('.cc-dropdown__item-title');
+      const title = titleEl ? titleEl.textContent.trim() : item.textContent.trim();
+      const badge = item.querySelector('.cc-status');
+
+      valueEl.innerHTML = '';
+      const textSpan = document.createElement('span');
+      textSpan.textContent = title;
+      valueEl.appendChild(textSpan);
+
+      if (badge) {
+        valueEl.appendChild(badge.cloneNode(true));
+      }
+      valueEl.classList.remove('cc-dropdown__value--placeholder');
+
+      toggle(false);
+      trigger.focus();
+    }
+
+    trigger.addEventListener('click', (e) => {
+      e.stopPropagation();
+      toggle();
+    });
+
+    items.forEach((item, index) => {
+      item.addEventListener('click', (e) => {
+        e.stopPropagation();
+        selectItem(item);
+      });
+
+      item.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          selectItem(item);
+        } else if (e.key === 'ArrowDown') {
+          e.preventDefault();
+          const nextIndex = (index + 1) % items.length;
+          items[nextIndex].focus();
+        } else if (e.key === 'ArrowUp') {
+          e.preventDefault();
+          const prevIndex = (index - 1 + items.length) % items.length;
+          items[prevIndex].focus();
+        } else if (e.key === 'Escape') {
+          e.preventDefault();
+          toggle(false);
+          trigger.focus();
+        } else if (e.key === 'Tab') {
+          toggle(false);
+        }
+      });
+    });
+
+    trigger.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowDown' || e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        toggle(true);
+      }
+    });
+
+    document.addEventListener('click', (e) => {
+      if (!dropdown.contains(e.target)) {
+        toggle(false);
+      }
+    });
+  });
+</script>
+</body>
+</html>
+

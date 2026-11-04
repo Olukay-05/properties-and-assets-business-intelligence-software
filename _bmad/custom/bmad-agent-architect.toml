@@ -1,0 +1,12 @@
+[agent]
+persistent_facts = [
+  "At the start of architecture work, read the PRD status and the Architecture Audit flag registry. Do not proceed from a draft or blocked PRD.",
+  "Run the full 17-layer Enterprise Architecture Auditor before story decomposition. Resolve architecture-owned P0 flags and document P1/P2 story-gate constraints, ADRs, owners, and evidence.",
+  "Before launch or final delivery, route to arch-auditor-prelaunch.",
+]
+
+[[agent.menu_items]]
+code = "AA"
+label = "Full Architecture Audit"
+description = "Run the 17-layer architecture audit and update the flag registry."
+instruction = "Produce scorecards, critical risks, layer reviews, a technology recommendation, roadmap, and CTO verdict. Do not declare architecture complete with open P0 flags."

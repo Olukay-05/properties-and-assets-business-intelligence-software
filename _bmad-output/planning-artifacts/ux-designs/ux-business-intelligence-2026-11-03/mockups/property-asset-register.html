@@ -1,0 +1,1331 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Key Screen UJ-1: Property Dossier &amp; Asset Register (Desktop)</title>
+  <style>
+    /* ==========================================================================
+       GOVERNED BY UX SPINE & ENTERPRISE-UI-UX SPEC:
+       - docs/design/design-context.md
+       - specs/screen-spec-uj1-property-asset-register.md
+       - DESIGN.md & EXPERIENCE.md (Components #1, #3, #4, #5, #6, #7, #8, #9, #10, #11, #12, #13, #14, #15, #19, #21)
+       ========================================================================== */
+
+    :root {
+      /* Core palette (WCAG 2.2 AA verified per docs/design/design-context.md) */
+      --cc-white: #FFFFFF;
+      --cc-navy: #14243A;
+      --cc-navy-2: #17365D;
+      --cc-blue: #4F81BD;
+      --cc-blue-dark: #365F91;
+      --cc-teal: #126E6A;
+      --cc-teal-hover: #0E5855;
+      --cc-teal-wash: #EAF3F4;
+      --cc-row: #F4F7FA;
+      --cc-line: #263244;
+      --cc-border: #C7D1DC;
+      --cc-border-control: #6E7E91; /* 3.95:1 on white for WCAG 2.2 SC 1.4.11 */
+      --cc-border-hover: #526071;
+      --cc-muted: #5F6F82;
+      --cc-subtle: #7B8794;
+      --cc-placeholder: #6E7E91;
+      --cc-page: #FFFFFF;
+      --cc-surface: #FFFFFF;
+      --cc-shell-backdrop: #F2F4F6;
+
+      /* Semantic states */
+      --cc-success: #126E6A;
+      --cc-success-bg: #EAF3F1;
+      --cc-warning: #94651D;
+      --cc-warning-bg: #F7F1E6;
+      --cc-danger: #A34545;
+      --cc-danger-bg: #F8EEEE;
+      --cc-info: #4F81BD;
+      --cc-info-bg: #EEF3F9;
+
+      /* Typography */
+      --cc-font-display: Arial, Helvetica, sans-serif;
+      --cc-font-body: Georgia, 'Times New Roman', serif;
+      --cc-font-ui: Arial, Helvetica, sans-serif;
+      --cc-text-xs: 0.75rem;
+      --cc-text-sm: 0.875rem;
+      --cc-text-base: 1rem;
+      --cc-text-lg: 1.125rem;
+      --cc-text-xl: 1.25rem;
+      --cc-text-2xl: 1.5rem;
+      --cc-text-3xl: 2rem;
+      --cc-text-4xl: 2.625rem;
+      --cc-leading-tight: 1.12;
+      --cc-leading-body: 1.42;
+      --cc-leading-ui: 1.35;
+
+      /* Spacing: 4px base rhythm */
+      --cc-space-1: 4px;
+      --cc-space-2: 8px;
+      --cc-space-3: 12px;
+      --cc-space-4: 16px;
+      --cc-space-5: 20px;
+      --cc-space-6: 24px;
+      --cc-space-8: 32px;
+      --cc-space-10: 40px;
+      --cc-space-12: 48px;
+      --cc-space-16: 64px;
+
+      /* Borders, shape and elevation */
+      --cc-border-thin: 1px solid var(--cc-border);
+      --cc-border-input: 1px solid var(--cc-border-control);
+      --cc-border-strong: 1px solid var(--cc-line);
+      --cc-rule-blue: 1px solid var(--cc-blue);
+      --cc-radius: 3px;
+      --cc-radius-sm: 2px;
+      --cc-shadow: 0 2px 8px rgba(20, 36, 58, 0.08);
+      --cc-shadow-popover: 0 8px 24px rgba(20, 36, 58, 0.14);
+
+      /* Interaction */
+      --cc-control-height: 40px;
+      --cc-focus: 0 0 0 3px rgba(79, 129, 189, 0.22);
+      --cc-transition: 150ms ease;
+    }
+
+    /* WCAG 2.2 SC 2.4.11 Focus Not Obscured */
+    html {
+      scroll-padding-top: 80px;
+      scroll-padding-bottom: 72px;
+    }
+
+    body {
+      margin: 0;
+      background: var(--cc-shell-backdrop);
+      color: var(--cc-navy);
+      font-family: var(--cc-font-body);
+      line-height: var(--cc-leading-body);
+      padding-bottom: 48px;
+    }
+
+    .cc-skip-link {
+      position: absolute;
+      top: -100px;
+      left: var(--cc-space-4);
+      z-index: 100;
+      background: var(--cc-navy-2);
+      color: var(--cc-white);
+      padding: 10px 16px;
+      border-radius: var(--cc-radius-sm);
+      font: 700 var(--cc-text-sm)/1.2 var(--cc-font-ui);
+      text-decoration: none;
+    }
+    .cc-skip-link:focus {
+      top: var(--cc-space-3);
+      outline: 2px solid var(--cc-blue-dark);
+      outline-offset: 2px;
+      box-shadow: var(--cc-focus);
+    }
+
+    .cc-theme *, .cc-theme *::before, .cc-theme *::after { box-sizing: border-box; }
+    .cc-theme :where(a, button, input, select, textarea, [tabindex]:not([tabindex="-1"])):focus-visible {
+      outline: 2px solid var(--cc-blue-dark);
+      outline-offset: 1px;
+      box-shadow: var(--cc-focus);
+    }
+    .cc-theme h1, .cc-theme h2, .cc-theme h3, .cc-theme h4,
+    .cc-theme .cc-display, .cc-theme .cc-ui { font-family: var(--cc-font-display); }
+    .cc-theme h1 { color: var(--cc-navy-2); font-size: var(--cc-text-3xl); line-height: 1.15; letter-spacing: -0.02em; font-weight: 700; margin: 0; }
+    .cc-theme h2 { color: var(--cc-blue); font-size: var(--cc-text-2xl); line-height: 1.2; font-weight: 700; margin: 0; }
+    .cc-theme h3 { color: var(--cc-navy-2); font-size: var(--cc-text-xl); line-height: 1.25; font-weight: 700; margin: 0; }
+    .cc-theme p { margin: 0; font: 400 var(--cc-text-base)/var(--cc-leading-body) var(--cc-font-body); color: var(--cc-navy); max-width: 75ch; }
+    .cc-theme a { color: var(--cc-blue-dark); text-decoration: underline; text-underline-offset: 3px; }
+    .cc-theme a:hover { color: var(--cc-navy-2); }
+    .cc-kicker { color: var(--cc-teal); font: 700 0.875rem/1.25 var(--cc-font-body); letter-spacing: .045em; text-transform: uppercase; }
+    .cc-subtitle { color: var(--cc-blue-dark); font: italic 400 var(--cc-text-xl)/1.35 var(--cc-font-display); max-width: 75ch; }
+    .cc-meta { color: var(--cc-muted); font: 400 var(--cc-text-sm)/var(--cc-leading-ui) var(--cc-font-body); }
+    .cc-rule { height: 1px; width: 100%; background: var(--cc-blue); border: 0; }
+    .cc-tabular { font-variant-numeric: tabular-nums; }
+
+    /* Browser frame wrapper */
+    .browser-frame {
+      max-width: 1200px;
+      margin: 24px auto;
+      border: 1px solid var(--cc-line);
+      background: var(--cc-shell-backdrop);
+    }
+    .browser-chrome {
+      background: var(--cc-navy);
+      color: var(--cc-white);
+      padding: 8px 16px;
+      font: 700 12px/1.3 var(--cc-font-ui);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .browser-url {
+      background: rgba(255,255,255,0.12);
+      padding: 4px 12px;
+      border-radius: 2px;
+      font-weight: 400;
+      color: #E2E8F0;
+    }
+
+    /* Interactive UX Prototype State Switcher Bar */
+    .ux-state-bar {
+      background: #EEF3F9;
+      border-bottom: 1px solid var(--cc-line);
+      padding: 10px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+      font-family: var(--cc-font-ui);
+    }
+    .ux-state-bar__label {
+      font: 700 12px/1.2 var(--cc-font-ui);
+      color: var(--cc-navy-2);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .ux-state-bar__buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    /* 1. app-shell-header */
+    .app-shell-header {
+      position: sticky;
+      top: 0;
+      z-index: 30;
+      min-height: 64px;
+      background: var(--cc-white);
+      border-top: 2px solid var(--cc-blue);
+      border-bottom: 1px solid var(--cc-line);
+      padding: 8px 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+    .shell-brand {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .shell-org {
+      font: 700 14px/1.2 var(--cc-font-ui);
+      color: var(--cc-navy-2);
+      white-space: nowrap;
+    }
+    .shell-nav {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      min-height: 48px;
+      flex-wrap: wrap;
+    }
+    .shell-nav a {
+      font: 700 14px/1.2 var(--cc-font-ui);
+      color: var(--cc-muted);
+      text-decoration: none;
+      min-height: 40px;
+      display: inline-flex;
+      align-items: center;
+      border-bottom: 2px solid transparent;
+    }
+    .shell-nav a.is-active {
+      color: var(--cc-navy-2);
+      border-bottom-color: var(--cc-blue);
+    }
+
+    /* Page structure */
+    .cc-page { max-width: 1120px; margin: 24px auto; padding: 56px 64px; background: var(--cc-white); border: 1px solid var(--cc-border); }
+    .cc-section { display: grid; gap: var(--cc-space-4); margin-top: var(--cc-space-10); }
+    .cc-stack { display: flex; flex-direction: column; gap: var(--cc-space-3); }
+    .cc-row { display: flex; align-items: center; gap: var(--cc-space-3); flex-wrap: wrap; }
+    .cc-spread { justify-content: space-between; }
+
+    /* Callout */
+    .cc-callout { background: var(--cc-teal-wash); padding: var(--cc-space-4) var(--cc-space-5); display: grid; gap: var(--cc-space-2); border: 0; border-radius: 0; }
+    .cc-callout__label { color: var(--cc-teal); font: 700 var(--cc-text-sm)/1.25 var(--cc-font-body); text-transform: uppercase; letter-spacing: .035em; }
+    .cc-callout__body { color: var(--cc-navy); font: 400 var(--cc-text-base)/var(--cc-leading-body) var(--cc-font-body); max-width: 75ch; }
+
+    /* Alert strip (States 5, 6, 8, 10) */
+    .cc-alert {
+      padding: 14px 16px;
+      border-radius: 0;
+      border: 1px solid #EBCFCF;
+      background: var(--cc-danger-bg);
+      color: #853838;
+      display: grid;
+      gap: 4px;
+      font: 400 var(--cc-text-sm)/1.4 var(--cc-font-body);
+    }
+    .cc-alert--warning {
+      border-color: #E8D9BA;
+      background: var(--cc-warning-bg);
+      color: #795014;
+    }
+    .cc-alert--neutral {
+      border-color: #DCE1E6;
+      background: #F1F3F5;
+      color: var(--cc-navy);
+    }
+    .cc-alert__title {
+      font: 700 var(--cc-text-sm)/1.3 var(--cc-font-ui);
+    }
+
+    /* Tables */
+    .cc-table-wrap { overflow-x: auto; border: var(--cc-border-strong); }
+    .cc-table { width: 100%; border-collapse: collapse; min-width: 560px; color: var(--cc-navy); font: 400 var(--cc-text-sm)/1.35 var(--cc-font-body); font-variant-numeric: tabular-nums; }
+    .cc-table th { text-align: left; vertical-align: middle; background: var(--cc-navy); color: var(--cc-white); padding: 10px 12px; font: 700 var(--cc-text-sm)/1.25 var(--cc-font-body); border: 1px solid var(--cc-line); }
+    .cc-table td { padding: 10px 12px; border: 1px solid var(--cc-line); vertical-align: middle; background: var(--cc-white); }
+    .cc-table tbody tr:nth-child(even) td { background: var(--cc-row); }
+    .cc-table td:first-child { font-weight: 700; }
+    .cc-table caption { caption-side: top; text-align: left; padding: 0 0 10px; color: var(--cc-muted); font: 400 var(--cc-text-sm)/1.35 var(--cc-font-body); }
+    .cc-num-right { text-align: right !important; font-variant-numeric: tabular-nums; }
+
+    /* Cards */
+    .cc-card-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+    .cc-card { background: var(--cc-surface); border: var(--cc-border-thin); border-radius: var(--cc-radius-sm); padding: var(--cc-space-5); box-shadow: none; display: flex; flex-direction: column; gap: 6px; }
+    .cc-card--emphasis { border-top: 3px solid var(--cc-blue); }
+    .cc-card__eyebrow { color: var(--cc-teal); font: 700 var(--cc-text-xs)/1.3 var(--cc-font-body); letter-spacing: .05em; text-transform: uppercase; }
+    .cc-card__value { color: var(--cc-navy-2); font: 700 var(--cc-text-3xl)/1.1 var(--cc-font-display); font-variant-numeric: tabular-nums; }
+    .cc-card__note { color: var(--cc-muted); font: 400 var(--cc-text-xs)/1.4 var(--cc-font-body); }
+
+    /* Buttons */
+    .cc-button { min-height: var(--cc-control-height); display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 0 16px; border: 1px solid transparent; border-radius: var(--cc-radius-sm); cursor: pointer; text-decoration: none; white-space: nowrap; font: 700 var(--cc-text-sm)/1 var(--cc-font-ui); transition: background var(--cc-transition), border-color var(--cc-transition), color var(--cc-transition); }
+    .cc-button--primary { background: var(--cc-navy-2); border-color: var(--cc-navy-2); color: var(--cc-white); }
+    .cc-button--primary:hover { background: var(--cc-blue-dark); border-color: var(--cc-blue-dark); }
+    .cc-button--secondary { background: var(--cc-white); border-color: var(--cc-navy-2); color: var(--cc-navy-2); }
+    .cc-button--secondary:hover { background: var(--cc-info-bg); }
+    .cc-button--teal { background: var(--cc-teal); border-color: var(--cc-teal); color: var(--cc-white); }
+    .cc-button--teal:hover { background: var(--cc-teal-hover); border-color: var(--cc-teal-hover); }
+    .cc-button--text { background: transparent; border-color: transparent; color: var(--cc-blue-dark); padding-inline: 8px; text-decoration: underline; text-underline-offset: 3px; }
+    .cc-button--text:hover { color: var(--cc-navy-2); background: var(--cc-info-bg); }
+    .cc-button--small { min-height: 32px; padding-inline: 12px; font-size: var(--cc-text-xs); }
+    .cc-button:disabled, .cc-button[aria-disabled="true"] { opacity: 0.46; cursor: not-allowed; }
+
+    /* Dropdown Editorial (Tier-2 Combobox) */
+    .cc-dropdown { position: relative; min-width: 270px; font-family: var(--cc-font-ui); }
+    .cc-dropdown__trigger {
+      width: 100%;
+      min-height: var(--cc-control-height);
+      border: var(--cc-border-input);
+      border-radius: var(--cc-radius-sm);
+      background: var(--cc-white);
+      color: var(--cc-navy);
+      padding: 6px 11px;
+      font: 700 var(--cc-text-xs)/1.3 var(--cc-font-ui);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      text-align: left;
+      cursor: pointer;
+    }
+    .cc-dropdown__trigger:hover { border-color: var(--cc-border-hover); }
+    .cc-dropdown__menu {
+      position: absolute;
+      top: calc(100% + 4px);
+      left: 0;
+      right: 0;
+      z-index: 60;
+      margin: 0;
+      padding: 4px 0;
+      background: var(--cc-surface);
+      border: var(--cc-border-input);
+      border-radius: var(--cc-radius-sm);
+      box-shadow: var(--cc-shadow-popover);
+      list-style: none;
+    }
+    .cc-dropdown__item {
+      padding: 8px 12px;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      font: 400 13px/1.35 var(--cc-font-ui);
+    }
+    .cc-dropdown__item:hover, .cc-dropdown__item.is-focused { background: var(--cc-info-bg); }
+    .cc-dropdown__item[aria-selected="true"] { background: var(--cc-row); font-weight: 700; color: var(--cc-navy-2); }
+
+    /* Status badges */
+    .cc-status { display: inline-flex; align-items: center; gap: 6px; padding: 4px 8px; border-radius: 2px; font: 700 var(--cc-text-xs)/1.2 var(--cc-font-ui); border: 1px solid transparent; white-space: nowrap; }
+    .cc-status--success { color: #126E6A; background: var(--cc-success-bg); border-color: #C8E0DC; }
+    .cc-status--warning { color: #795014; background: var(--cc-warning-bg); border-color: #E8D9BA; }
+    .cc-status--danger { color: #853838; background: var(--cc-danger-bg); border-color: #EBCFCF; }
+    .cc-status--info { color: var(--cc-blue-dark); background: var(--cc-info-bg); border-color: #D4E0EF; }
+    .cc-status--neutral { color: var(--cc-muted); background: #F1F3F5; border-color: #DCE1E6; }
+
+    /* Tabs */
+    .cc-tabs { display: flex; gap: 22px; border-bottom: 1px solid var(--cc-border); flex-wrap: wrap; }
+    .cc-tab { appearance: none; min-height: 40px; display: inline-flex; align-items: center; background: transparent; border: 0; border-bottom: 2px solid transparent; margin-bottom: -1px; padding: 10px 2px; color: var(--cc-muted); font: 700 var(--cc-text-sm)/1.2 var(--cc-font-ui); cursor: pointer; }
+    .cc-tab[aria-selected="true"] { color: var(--cc-navy-2); border-bottom-color: var(--cc-blue); }
+
+    /* Filter chips & inputs (WCAG 2.2 SC 1.4.11 >=3:1 border contrast) */
+    .cc-field { display: grid; gap: 6px; font-family: var(--cc-font-ui); }
+    .cc-label { color: var(--cc-navy-2); font: 700 var(--cc-text-sm)/1.3 var(--cc-font-ui); }
+    .cc-hint { color: var(--cc-muted); font: 400 var(--cc-text-xs)/1.4 var(--cc-font-body); }
+    .cc-error { color: var(--cc-danger); font: 700 var(--cc-text-xs)/1.4 var(--cc-font-ui); }
+    .cc-input, .cc-select, .cc-textarea { min-height: var(--cc-control-height); border: var(--cc-border-input); border-radius: var(--cc-radius-sm); background: var(--cc-white); color: var(--cc-navy); padding: 9px 11px; font: 400 var(--cc-text-sm)/1.4 var(--cc-font-ui); width: 100%; }
+    .cc-input:hover, .cc-select:hover, .cc-textarea:hover { border-color: var(--cc-border-hover); }
+    .cc-input[aria-invalid="true"], .cc-select[aria-invalid="true"] { border: 2px solid var(--cc-danger); }
+    .cc-filter { display: inline-flex; align-items: center; gap: 6px; min-height: 40px; padding: 7px 12px; border: var(--cc-border-input); background: var(--cc-white); color: var(--cc-navy-2); font: 700 var(--cc-text-xs)/1.2 var(--cc-font-ui); border-radius: 2px; cursor: pointer; }
+    .cc-filter:hover { border-color: var(--cc-border-hover); }
+    .cc-filter[aria-pressed="true"] { border-color: var(--cc-blue); background: var(--cc-info-bg); }
+
+    /* 15. property-map */
+    .property-split {
+      display: grid;
+      grid-template-columns: 1.25fr 1fr;
+      gap: 24px;
+      align-items: start;
+    }
+    .cc-property-map {
+      position: relative;
+      height: 340px;
+      border: 1px solid var(--cc-line);
+      border-radius: var(--cc-radius);
+      background: #E8EEF5;
+      overflow: hidden;
+    }
+    .map-grid-svg { width: 100%; height: 100%; display: block; }
+    .map-overlay-card {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      background: var(--cc-white);
+      border: 1px solid var(--cc-border);
+      border-radius: var(--cc-radius-sm);
+      padding: 10px 12px;
+      box-shadow: var(--cc-shadow);
+      max-width: 260px;
+      font: 400 12px/1.4 var(--cc-font-body);
+      font-variant-numeric: tabular-nums;
+    }
+    .map-pin-badge {
+      position: absolute;
+      left: 52%;
+      top: 46%;
+      transform: translate(-50%, -100%);
+      background: var(--cc-teal);
+      color: var(--cc-white);
+      border: 2px solid var(--cc-white);
+      border-radius: 2px;
+      padding: 4px 8px;
+      font: 700 12px/1.2 var(--cc-font-ui);
+      box-shadow: var(--cc-shadow);
+    }
+
+    /* Skeleton loading bars (State 1) */
+    @keyframes cc-pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.45; }
+    }
+    .cc-skeleton {
+      background: #DCE4EC;
+      border-radius: 2px;
+      height: 18px;
+      animation: cc-pulse 1.5s ease-in-out infinite;
+    }
+
+    /* 21. modal-dialog */
+    .cc-modal-backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 90;
+      background: rgba(20, 36, 58, 0.45);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+    .cc-modal-backdrop[hidden] { display: none !important; }
+    .cc-modal {
+      width: 100%;
+      max-width: 560px;
+      background: var(--cc-white);
+      border: 1px solid var(--cc-line);
+      border-radius: var(--cc-radius);
+      box-shadow: var(--cc-shadow-popover);
+      padding: 24px;
+      display: grid;
+      gap: 16px;
+    }
+
+    /* Pagination */
+    .cc-page-link { width: 34px; height: 34px; display: inline-grid; place-items: center; border: var(--cc-border-input); color: var(--cc-navy-2); text-decoration: none; font: 700 var(--cc-text-xs)/1 var(--cc-font-ui); }
+    .cc-page-link[aria-current="page"] { background: var(--cc-navy-2); color: var(--cc-white); border-color: var(--cc-navy-2); }
+
+    @media (max-width: 920px) {
+      .cc-card-grid { grid-template-columns: repeat(2, 1fr); }
+      .property-split { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 760px) {
+      .cc-page { padding: 32px 22px; margin: 0; }
+      .cc-card-grid { grid-template-columns: 1fr; }
+      .cc-subtitle { font-size: var(--cc-text-lg); }
+      .cc-input, .cc-select, .cc-textarea, .cc-dropdown__trigger { font-size: 1rem; }
+      .cc-page-link { width: 40px; height: 40px; }
+      .cc-button--small { min-height: 36px; }
+      .cc-table td .cc-row { gap: 8px; }
+      .cc-table-wrap {
+        background:
+          linear-gradient(to right, var(--cc-white) 30%, rgba(255, 255, 255, 0)),
+          linear-gradient(to right, rgba(255, 255, 255, 0), var(--cc-white) 70%) 100% 0,
+          radial-gradient(farthest-side at 0 50%, rgba(20, 36, 58, 0.18), rgba(20, 36, 58, 0)),
+          radial-gradient(farthest-side at 100% 50%, rgba(20, 36, 58, 0.18), rgba(20, 36, 58, 0)) 100% 0;
+        background-repeat: no-repeat;
+        background-size: 40px 100%, 40px 100%, 14px 100%, 14px 100%;
+        background-attachment: local, local, scroll, scroll;
+      }
+      .cc-table th:first-child,
+      .cc-table td:first-child {
+        position: sticky;
+        left: 0;
+        z-index: 2;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+      }
+    }
+  </style>
+</head>
+<body class="cc-theme">
+
+  <a href="#main-content" class="cc-skip-link">Skip to main content</a>
+
+  <div class="browser-frame">
+    <div class="browser-chrome">
+      <span>Cloud Crafters Property &amp; Asset Intelligence · Desktop Editorial Canvas (&gt;760px)</span>
+      <span class="browser-url">https://fm.cloudcrafters.ng/properties/0192f4b8-7c10-7a32-9b14-08d1e4a91201</span>
+      <span>Protagonist: Chidi Okafor (Operations Manager · UJ-1)</span>
+    </div>
+
+    <!-- Interactive UX State Switcher (enterprise-ui-ux SPEC & REVIEW verification) -->
+    <section class="ux-state-bar" aria-label="Interactive UX state switcher">
+      <span class="ux-state-bar__label">Interactive UX state preview:</span>
+      <div class="ux-state-bar__buttons" role="group" aria-label="Select screen state">
+        <button type="button" class="cc-filter" data-ux-state="default" aria-pressed="true">Default (Happy path)</button>
+        <button type="button" class="cc-filter" data-ux-state="loading" aria-pressed="false">Loading (Skeleton)</button>
+        <button type="button" class="cc-filter" data-ux-state="empty-first" aria-pressed="false">Empty (0 assets)</button>
+        <button type="button" class="cc-filter" data-ux-state="error-422" aria-pressed="false">Error (422 duplicate tag)</button>
+        <button type="button" class="cc-filter" data-ux-state="offline-map" aria-pressed="false">Offline / Map tile fallback</button>
+        <button type="button" class="cc-filter" data-ux-state="readonly-role" aria-pressed="false">Permission (Technician read-only)</button>
+      </div>
+    </section>
+
+    <!-- 1. app-shell-header -->
+    <header class="app-shell-header" aria-label="Application shell header">
+      <div class="shell-brand">
+        <span class="shell-org">CLOUD CRAFTERS FM</span>
+        <!-- 10. dropdown-editorial (Tier-2 Client account scope switcher) -->
+        <div class="cc-dropdown" id="client-scope-dropdown">
+          <button
+            type="button"
+            id="client-scope-trigger"
+            class="cc-dropdown__trigger"
+            role="combobox"
+            aria-haspopup="listbox"
+            aria-expanded="false"
+            aria-controls="client-scope-listbox"
+            aria-labelledby="client-scope-label client-scope-value"
+          >
+            <div>
+              <div id="client-scope-label" style="color: var(--cc-muted); font-size: 12px; text-transform: uppercase; letter-spacing: 0.04em;">Client account scope</div>
+              <div id="client-scope-value" style="color: var(--cc-navy-2); font-size: 13px; font-weight: 700;">Lagoon View Estates Ltd (3 sites)</div>
+            </div>
+            <span class="cc-status cc-status--success">Active</span>
+          </button>
+          <ul id="client-scope-listbox" class="cc-dropdown__menu" role="listbox" aria-label="Permitted client accounts" hidden>
+            <li class="cc-dropdown__item" role="option" aria-selected="true" data-client="Lagoon View Estates Ltd (3 sites)">
+              <span>Lagoon View Estates Ltd (3 sites)</span>
+              <span class="cc-status cc-status--success">Active</span>
+            </li>
+            <li class="cc-dropdown__item" role="option" aria-selected="false" data-client="Victoria Crest Holdings (2 sites)">
+              <span>Victoria Crest Holdings (2 sites)</span>
+              <span class="cc-status cc-status--success">Active</span>
+            </li>
+            <li class="cc-dropdown__item" role="option" aria-selected="false" data-client="All permitted client accounts (5 sites)">
+              <span>All permitted client accounts (5 sites)</span>
+              <span class="cc-status cc-status--neutral">Org scope</span>
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <nav class="shell-nav" aria-label="Primary module navigation">
+        <a href="#portfolio" class="is-active" aria-current="page">Portfolio &amp; properties</a>
+        <a href="#assets">Assets</a>
+        <a href="#inspections">Inspections</a>
+        <a href="#work-orders">Work orders</a>
+        <a href="#reports">Client reports</a>
+        <a href="#audit">Organisation &amp; audit</a>
+      </nav>
+
+      <div class="cc-row" style="gap: 10px;">
+        <span id="active-role-badge" class="cc-status cc-status--neutral">Operations manager</span>
+        <span id="active-user-name" style="font: 700 13px/1 var(--cc-font-ui); color: var(--cc-navy-2);">Chidi Okafor</span>
+      </div>
+    </header>
+
+    <!-- Main 1120px Editorial Page Sheet -->
+    <main id="main-content" class="cc-page" tabindex="-1">
+
+      <!-- Live status banners for Offline, Permission Restricted, or Location Saved -->
+      <div id="live-banner-region" role="status" aria-live="polite">
+        <div id="banner-offline" class="cc-alert cc-alert--warning" hidden style="margin-bottom: 20px;">
+          <div class="cc-alert__title">Offline connection detected · Viewing cached property dossier</div>
+          <div>MapLibre vector tiles are unavailable on the current connection. Canonical PostGIS coordinates (6.4284° N, 3.4222° E) and registered assets remain readable below. Reconnect before saving coordinate or asset changes.</div>
+        </div>
+        <div id="banner-readonly" class="cc-alert cc-alert--neutral" hidden style="margin-bottom: 20px;">
+          <div class="cc-alert__title">Viewing in read-only mode (Technician role)</div>
+          <div>Technicians can inspect site coordinates, zones, and accountable custodians. Only Operations Managers and Organisation Owners may register assets, update property coordinates, or transfer asset custody.</div>
+        </div>
+        <div id="banner-saved" class="cc-callout" hidden style="margin-bottom: 20px;">
+          <div class="cc-callout__label">Location coordinates appended</div>
+          <div class="cc-callout__body" id="banner-saved-text">Updated canonical coordinates saved to locations history.</div>
+        </div>
+      </div>
+
+      <!-- 3. page-header -->
+      <header class="cc-stack">
+        <div class="cc-kicker">Client Property Dossier · Lagoon View Estates Ltd · Site Code LVE-VI-01</div>
+        <h1>Victoria Island Retail Plaza (14 Adeola Odeku Street)</h1>
+        <hr class="cc-rule" />
+        <div class="cc-subtitle">Commercial mixed-use facility register, canonical PostGIS coordinate history, defined site zones, and accountable asset custody.</div>
+
+        <div class="cc-row cc-spread" style="margin-top: 4px;">
+          <div class="cc-row">
+            <span class="cc-status cc-status--success">Active property</span>
+            <span class="cc-status cc-status--success">Postcode verified (NIPOST · 101241)</span>
+            <span class="cc-meta cc-tabular">Last updated: 03 Nov 2026, 09:42 WAT · Contact: Engr. Seyi Martins</span>
+          </div>
+          <!-- Strictly ONE primary action (.cc-button--primary) per view -->
+          <div class="cc-row" id="header-mutation-actions">
+            <button type="button" id="btn-open-gps-modal" class="cc-button cc-button--secondary">Update GPS location</button>
+            <button type="button" class="cc-button cc-button--secondary">Schedule inspection</button>
+            <button type="button" id="btn-open-asset-form" class="cc-button cc-button--primary">Register asset</button>
+          </div>
+        </div>
+
+        <!-- Mandatory Postcode Truthfulness Guardrail (PRD §6.2 & EXPERIENCE.md ## Voice and Tone) -->
+        <p class="cc-meta" style="border-left: 2px solid var(--cc-blue); padding-left: 10px; color: var(--cc-navy);">
+          <strong>Postal verification notice (NIPOST 101241):</strong> Identifies postal routing reference only. Does not verify property title, ownership, or legal occupancy.
+        </p>
+      </header>
+
+      <!-- State 5: Inline Register Asset Form with 422 Validation Error (shown in Error 422 state or when Register asset clicked) -->
+      <section id="section-register-asset-error" class="cc-section" aria-label="Register asset form" hidden>
+        <div class="cc-card" style="border-color: var(--cc-line);">
+          <div class="cc-stack" style="gap: 16px;">
+            <div class="cc-row cc-spread">
+              <div>
+                <div class="cc-kicker">Asset Onboarding · LVE-VI-01</div>
+                <h3>Register site asset &amp; assign accountable custodian</h3>
+              </div>
+              <button type="button" id="btn-close-asset-form" class="cc-button cc-button--text">Cancel</button>
+            </div>
+
+            <div id="asset-error-summary" class="cc-alert" role="alert" tabindex="-1">
+              <div class="cc-alert__title">Could not save asset (validation_failed)</div>
+              <div>Asset tag <strong>LVE-GEN-01</strong> is already registered at Victoria Island Retail Plaza. Enter a unique asset tag within this property (for example <strong>LVE-GEN-02</strong>) and save again. Your entered values have been preserved below.</div>
+            </div>
+
+            <form id="form-register-asset" novalidate style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px;">
+              <div class="cc-field">
+                <label for="input-asset-tag" class="cc-label">Asset tag</label>
+                <input id="input-asset-tag" type="text" class="cc-input" value="LVE-GEN-01" aria-invalid="true" aria-describedby="err-asset-tag" autocomplete="off" />
+                <span id="err-asset-tag" class="cc-error">Asset tag LVE-GEN-01 already exists on this property. Enter a unique tag such as LVE-GEN-02.</span>
+              </div>
+              <div class="cc-field">
+                <label for="input-asset-name" class="cc-label">Asset name &amp; rating</label>
+                <input id="input-asset-name" type="text" class="cc-input" value="350kVA Mikano Aux Generator" />
+              </div>
+              <div class="cc-field">
+                <label for="input-asset-zone" class="cc-label">Site zone</label>
+                <select id="input-asset-zone" class="cc-select">
+                  <option value="Generator House" selected>Generator House</option>
+                  <option value="Ground Floor">Ground Floor</option>
+                  <option value="Roof Plant">Roof Plant</option>
+                  <option value="Basement Car Park">Basement Car Park</option>
+                </select>
+              </div>
+              <div class="cc-field">
+                <label for="input-asset-custodian" class="cc-label">Accountable custodian</label>
+                <select id="input-asset-custodian" class="cc-select">
+                  <option value="Amara Bello" selected>Amara Bello (Site supervisor)</option>
+                  <option value="Musa Ibrahim">Musa Ibrahim (Lead HVAC supervisor)</option>
+                  <option value="Chidi Okafor">Chidi Okafor (Operations manager)</option>
+                </select>
+                <span class="cc-hint">Stored in append-only asset_custody history (distinct from work order technician).</span>
+              </div>
+              <div class="cc-row" style="grid-column: 1 / -1; justify-content: flex-end; margin-top: 4px;">
+                <button type="submit" class="cc-button cc-button--primary">Save asset to register</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </section>
+
+      <!-- 6. editorial-card summary strip -->
+      <section class="cc-section" style="margin-top: 28px;" aria-label="Property summary metrics">
+        <div class="cc-card-grid" id="metrics-default">
+          <div class="cc-card cc-card--emphasis">
+            <span class="cc-card__eyebrow">Registered assets</span>
+            <span class="cc-card__value" id="metric-asset-count">18</span>
+            <span class="cc-card__note">100% assigned to an Accountable Custodian</span>
+          </div>
+          <div class="cc-card">
+            <span class="cc-card__eyebrow">Defined site zones</span>
+            <span class="cc-card__value">4</span>
+            <span class="cc-card__note">Generator House, Ground Floor, Roof Plant, Basement</span>
+          </div>
+          <div class="cc-card">
+            <span class="cc-card__eyebrow">Scheduled inspections</span>
+            <span class="cc-card__value">2</span>
+            <span class="cc-card__note">Next due: 03 Nov 2026 (Generator &amp; Plant Room v2)</span>
+          </div>
+          <div class="cc-card">
+            <span class="cc-card__eyebrow">Open work orders</span>
+            <span class="cc-card__value">1</span>
+            <span class="cc-card__note">WO-2026-0142 · Assigned to Tunde Adeyemi</span>
+          </div>
+        </div>
+
+        <!-- Skeleton state for metrics -->
+        <div class="cc-card-grid" id="metrics-skeleton" hidden aria-hidden="true">
+          <div class="cc-card"><div class="cc-skeleton" style="width: 60%;"></div><div class="cc-skeleton" style="width: 40%; height: 32px;"></div><div class="cc-skeleton" style="width: 85%;"></div></div>
+          <div class="cc-card"><div class="cc-skeleton" style="width: 60%;"></div><div class="cc-skeleton" style="width: 40%; height: 32px;"></div><div class="cc-skeleton" style="width: 85%;"></div></div>
+          <div class="cc-card"><div class="cc-skeleton" style="width: 60%;"></div><div class="cc-skeleton" style="width: 40%; height: 32px;"></div><div class="cc-skeleton" style="width: 85%;"></div></div>
+          <div class="cc-card"><div class="cc-skeleton" style="width: 60%;"></div><div class="cc-skeleton" style="width: 40%; height: 32px;"></div><div class="cc-skeleton" style="width: 85%;"></div></div>
+        </div>
+      </section>
+
+      <!-- Geospatial Dossier & Append-Only Location History (FR-2, FR-3, FR-7, AD-7, AD-8) -->
+      <section class="cc-section" aria-label="Geospatial location and append-only survey trail">
+        <div class="cc-row cc-spread">
+          <div>
+            <div class="cc-kicker">Geospatial &amp; Survey Provenance</div>
+            <h2>Canonical site coordinates &amp; append-only location history</h2>
+          </div>
+          <span class="cc-meta">PostGIS SRID 4326 · Distances computed in metres (m) via Geography cast</span>
+        </div>
+
+        <div class="property-split">
+          <!-- 15. property-map -->
+          <div class="cc-property-map" id="map-visual-container" role="region" aria-label="MapLibre property map for LVE-VI-01">
+            <svg class="map-grid-svg" id="map-svg-canvas" viewBox="0 0 600 340" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Vector map showing LVE-VI-01 at 14 Adeola Odeku Street, Victoria Island">
+              <rect width="600" height="340" fill="#EBF1F6"/>
+              <path d="M0,45 Q240,75 600,20 L600,0 L0,0 Z" fill="#CFE0EE"/>
+              <line x1="40" y1="180" x2="580" y2="140" stroke="#FFFFFF" stroke-width="10"/>
+              <line x1="40" y1="180" x2="580" y2="140" stroke="#B8C7D9" stroke-width="1.5"/>
+              <line x1="210" y1="30" x2="250" y2="330" stroke="#FFFFFF" stroke-width="8"/>
+              <line x1="420" y1="20" x2="450" y2="330" stroke="#FFFFFF" stroke-width="7"/>
+              <line x1="20" y1="275" x2="590" y2="255" stroke="#FFFFFF" stroke-width="6"/>
+              <rect x="275" y="110" width="95" height="45" fill="#D9E2EC" stroke="#8D9CAF" stroke-width="1"/>
+              <rect x="115" y="195" width="75" height="50" fill="#D9E2EC" stroke="#8D9CAF" stroke-width="1"/>
+              <rect x="268" y="172" width="118" height="62" fill="#C8E0DC" stroke="#126E6A" stroke-width="1.5"/>
+              <circle cx="290" cy="212" r="5" fill="#5F6F82" stroke="#FFFFFF" stroke-width="1.5"/>
+              <line x1="290" y1="212" x2="312" y2="156" stroke="#17365D" stroke-dasharray="3,3" stroke-width="1.5"/>
+              <circle cx="312" cy="156" r="7" fill="#126E6A" stroke="#FFFFFF" stroke-width="2"/>
+            </svg>
+
+            <div class="map-pin-badge" id="map-pin-label">LVE-VI-01 · 14 Adeola Odeku St (Canonical)</div>
+
+            <div class="map-overlay-card" id="map-overlay-card">
+              <div style="font: 700 12px/1.2 var(--cc-font-ui); color: var(--cc-navy-2); margin-bottom: 4px;">Canonical geometry (properties.geom)</div>
+              <div><strong>Lat / Lng:</strong> <span id="canonical-latlng">6.4284° N, 3.4222° E</span></div>
+              <div><strong>GPS accuracy:</strong> ±5.0 m · <strong>Source:</strong> Browser GPS</div>
+              <div><strong>Captured:</strong> 03 Nov 2026, 09:42 WAT</div>
+              <div style="color: var(--cc-muted); margin-top: 4px;">MapLibre GL JS 5 · OpenFreeMap Vector Tiles</div>
+            </div>
+
+            <!-- Offline / Map tile fallback view (Partial state) -->
+            <div id="map-offline-fallback" hidden style="padding: 24px; background: var(--cc-row); height: 100%; display: flex; flex-direction: column; justify-content: center; gap: 12px;">
+              <span class="cc-status cc-status--warning" style="align-self: flex-start;">Map tiles offline · Coordinate table active</span>
+              <h3>Canonical PostGIS coordinate record (LVE-VI-01)</h3>
+              <p>Vector map tiles could not be loaded on the current mobile or broadband connection. Site verification and location updates remain available using direct WGS84 coordinates:</p>
+              <div class="cc-meta cc-tabular" style="color: var(--cc-navy); font-weight: 700;">
+                Latitude: 6.4284° N · Longitude: 3.4222° E · Accuracy: ±5.0 m · Source: Browser GPS (03 Nov 2026, 09:42 WAT)
+              </div>
+            </div>
+          </div>
+
+          <!-- Append-only locations table (FR-3, AD-7, AD-8) -->
+          <div class="cc-table-wrap">
+            <table class="cc-table" style="min-width: 420px;">
+              <caption>Append-only coordinate history (locations table: latest entry is canonical).</caption>
+              <thead>
+                <tr>
+                  <th scope="col">Captured at (WAT)</th>
+                  <th scope="col">Coordinates &amp; offset</th>
+                  <th scope="col">Source &amp; accuracy</th>
+                  <th scope="col">Recorded by</th>
+                </tr>
+              </thead>
+              <tbody id="location-history-tbody">
+                <tr>
+                  <td>
+                    03 Nov 2026, 09:42
+                    <div style="margin-top: 4px;"><span class="cc-status cc-status--success">Canonical active</span></div>
+                  </td>
+                  <td>
+                    6.4284° N, 3.4222° E
+                    <div class="cc-meta">Adjusted 44.8 m NE from initial pin</div>
+                  </td>
+                  <td>
+                    Browser GPS
+                    <div class="cc-meta">±5.0 m</div>
+                  </td>
+                  <td>
+                    Chidi Okafor
+                    <div class="cc-meta">Re-surveyed gatehouse</div>
+                  </td>
+                </tr>
+                <tr>
+                  <td>
+                    01 Nov 2026, 11:15
+                    <div style="margin-top: 4px;"><span class="cc-status cc-status--neutral">Historical</span></div>
+                  </td>
+                  <td>
+                    6.4281° N, 3.4219° E
+                    <div class="cc-meta">Initial onboarding coordinate</div>
+                  </td>
+                  <td>
+                    Manual pin
+                    <div class="cc-meta">±18.0 m</div>
+                  </td>
+                  <td>
+                    Chidi Okafor
+                    <div class="cc-meta">Initial site registration</div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- 12. tabs + Scoped Asset Register & Custodian Assignment (FR-4, FR-5, FR-6, FR-8) -->
+      <section class="cc-section" aria-label="Property zones and scoped asset register">
+        <div class="cc-tabs" role="tablist" aria-label="Property dossier sections">
+          <button type="button" id="tab-assets" class="cc-tab" role="tab" aria-selected="true" aria-controls="panel-assets" tabindex="0">Assets register (18)</button>
+          <button type="button" id="tab-zones" class="cc-tab" role="tab" aria-selected="false" aria-controls="panel-zones" tabindex="-1">Site zones (4)</button>
+          <button type="button" id="tab-inspections" class="cc-tab" role="tab" aria-selected="false" aria-controls="panel-inspections" tabindex="-1">Inspections (6)</button>
+          <button type="button" id="tab-work-orders" class="cc-tab" role="tab" aria-selected="false" aria-controls="panel-work-orders" tabindex="-1">Work orders (4)</button>
+        </div>
+
+        <!-- TAB PANEL 1: ASSETS REGISTER -->
+        <div id="panel-assets" role="tabpanel" aria-labelledby="tab-assets" class="cc-stack" style="gap: 16px;">
+          <!-- 13. filter-bar -->
+          <div class="cc-row cc-spread" id="asset-filter-bar" style="margin-top: 8px;">
+            <div class="cc-row">
+              <label for="asset-search" class="cc-label">Filter assets</label>
+              <input id="asset-search" type="search" class="cc-input" style="width: 250px;" value="" placeholder="e.g. LVE-GEN-01 or Mikano" />
+              <button type="button" class="cc-filter" data-zone-filter="all" aria-pressed="true">All zones (18)</button>
+              <button type="button" class="cc-filter" data-zone-filter="Generator House" aria-pressed="false">Generator House (4)</button>
+              <button type="button" class="cc-filter" data-zone-filter="Ground Floor" aria-pressed="false">Ground Floor (6)</button>
+              <button type="button" class="cc-filter" data-zone-filter="Roof Plant" aria-pressed="false">Roof Plant (5)</button>
+              <button type="button" class="cc-filter" data-zone-filter="Basement Car Park" aria-pressed="false">Basement Car Park (3)</button>
+              <button type="button" id="btn-clear-asset-filters" class="cc-button cc-button--text" hidden>Clear filters</button>
+            </div>
+            <span class="cc-meta cc-tabular" id="asset-filter-count" role="status" aria-live="polite">Showing 5 of 18 assets scoped to Lagoon View Estates Ltd</span>
+          </div>
+
+          <!-- State 1: Skeleton Table -->
+          <div class="cc-table-wrap" id="assets-table-skeleton" hidden aria-hidden="true">
+            <table class="cc-table">
+              <thead>
+                <tr><th>Asset tag &amp; specification</th><th>Category</th><th>Site zone</th><th>Condition</th><th>Status</th><th>Accountable custodian</th></tr>
+              </thead>
+              <tbody>
+                <tr><td><div class="cc-skeleton"></div></td><td><div class="cc-skeleton"></div></td><td><div class="cc-skeleton"></div></td><td><div class="cc-skeleton"></div></td><td><div class="cc-skeleton"></div></td><td><div class="cc-skeleton"></div></td></tr>
+                <tr><td><div class="cc-skeleton"></div></td><td><div class="cc-skeleton"></div></td><td><div class="cc-skeleton"></div></td><td><div class="cc-skeleton"></div></td><td><div class="cc-skeleton"></div></td><td><div class="cc-skeleton"></div></td></tr>
+                <tr><td><div class="cc-skeleton"></div></td><td><div class="cc-skeleton"></div></td><td><div class="cc-skeleton"></div></td><td><div class="cc-skeleton"></div></td><td><div class="cc-skeleton"></div></td><td><div class="cc-skeleton"></div></td></tr>
+                <tr><td><div class="cc-skeleton"></div></td><td><div class="cc-skeleton"></div></td><td><div class="cc-skeleton"></div></td><td><div class="cc-skeleton"></div></td><td><div class="cc-skeleton"></div></td><td><div class="cc-skeleton"></div></td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- State 2A: Empty First Use (0 registered assets) -->
+          <div class="cc-card" id="assets-empty-first" hidden style="padding: 32px; text-align: left;">
+            <div class="cc-stack" style="max-width: 620px;">
+              <span class="cc-kicker">Empty Asset Register · LVE-VI-01</span>
+              <h3>No assets registered for Victoria Island Retail Plaza yet</h3>
+              <p>Register the first site asset (such as a standby generator, HVAC chiller, booster pump, or passenger lift) to assign an accountable custodian and include it in scheduled facility inspections.</p>
+              <div class="cc-row" style="margin-top: 8px;">
+                <button type="button" class="cc-button cc-button--primary" onclick="document.getElementById('btn-open-asset-form').click()">Register first asset</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- State 2B: Empty Filter No Results -->
+          <div class="cc-card" id="assets-empty-filter" hidden style="padding: 28px;">
+            <div class="cc-stack" style="max-width: 580px;">
+              <h3>No assets match your active filters</h3>
+              <p>No registered assets matched your search keyword or zone selection. Try another search term or reset the active filters.</p>
+              <div class="cc-row" style="margin-top: 6px;">
+                <button type="button" class="cc-button cc-button--secondary" onclick="document.getElementById('btn-clear-asset-filters').click()">Clear filters</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- 5. data-table (Default Asset Register) -->
+          <div class="cc-table-wrap" id="assets-table-default">
+            <table class="cc-table">
+              <caption>Scoped asset register for 14 Adeola Odeku Street (LVE-VI-01). Accountable custodian reflects the latest append-only asset_custody record.</caption>
+              <thead>
+                <tr>
+                  <th scope="col" aria-sort="ascending" style="width: 24%;">Asset tag &amp; specification</th>
+                  <th scope="col">Category</th>
+                  <th scope="col">Site zone</th>
+                  <th scope="col">Condition</th>
+                  <th scope="col">Operational status</th>
+                  <th scope="col">Accountable custodian</th>
+                  <th scope="col">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="asset-rows-tbody">
+                <tr data-zone="Generator House">
+                  <td>
+                    <a href="#asset-lve-gen-01">LVE-GEN-01 · 500kVA Mikano Standby Generator</a>
+                    <div class="cc-meta">Perkins 2506A-E15TAG2 · Serial: PRK-99412-NG</div>
+                  </td>
+                  <td>Power Generation</td>
+                  <td>Generator House</td>
+                  <td><span class="cc-status cc-status--warning">Fair (needs attention)</span></td>
+                  <td><span class="cc-status cc-status--success">Active</span></td>
+                  <td>
+                    <strong>Amara Bello</strong> (Site supervisor)
+                    <div class="cc-meta cc-tabular">Assigned 01 Nov 2026, 11:30 WAT</div>
+                  </td>
+                  <td>
+                    <div class="cc-row" style="gap: 8px;">
+                      <button type="button" class="cc-button cc-button--secondary cc-button--small js-mutation-btn">Handover custody</button>
+                      <button type="button" class="cc-button cc-button--text cc-button--small">Timeline (4)</button>
+                    </div>
+                  </td>
+                </tr>
+                <tr data-zone="Generator House">
+                  <td>
+                    <a href="#asset-lve-ats-01">LVE-ATS-01 · 800A ABB Automatic Transfer Switch</a>
+                    <div class="cc-meta">ABB TruONE OXB800E3X4 · Panel B1</div>
+                  </td>
+                  <td>Electrical Switchgear</td>
+                  <td>Generator House</td>
+                  <td><span class="cc-status cc-status--success">Good</span></td>
+                  <td><span class="cc-status cc-status--success">Active</span></td>
+                  <td>
+                    <strong>Amara Bello</strong> (Site supervisor)
+                    <div class="cc-meta cc-tabular">Assigned 01 Nov 2026, 11:32 WAT</div>
+                  </td>
+                  <td>
+                    <div class="cc-row" style="gap: 8px;">
+                      <button type="button" class="cc-button cc-button--secondary cc-button--small js-mutation-btn">Handover custody</button>
+                      <button type="button" class="cc-button cc-button--text cc-button--small">Timeline (2)</button>
+                    </div>
+                  </td>
+                </tr>
+                <tr data-zone="Roof Plant">
+                  <td>
+                    <a href="#asset-lve-hvac-01">LVE-HVAC-01 · Daikin VRV IV Rooftop Condenser Bank</a>
+                    <div class="cc-meta">Capacity: 140 kW · R410A Dual Circuit</div>
+                  </td>
+                  <td>HVAC &amp; Cooling</td>
+                  <td>Roof Plant</td>
+                  <td><span class="cc-status cc-status--success">Good</span></td>
+                  <td><span class="cc-status cc-status--success">Active</span></td>
+                  <td>
+                    <strong>Musa Ibrahim</strong> (Lead HVAC supervisor)
+                    <div class="cc-meta cc-tabular">Handover 02 Nov 2026, 15:10 WAT</div>
+                  </td>
+                  <td>
+                    <div class="cc-row" style="gap: 8px;">
+                      <button type="button" class="cc-button cc-button--secondary cc-button--small js-mutation-btn">Handover custody</button>
+                      <button type="button" class="cc-button cc-button--text cc-button--small">Timeline (3)</button>
+                    </div>
+                  </td>
+                </tr>
+                <tr data-zone="Basement Car Park">
+                  <td>
+                    <a href="#asset-lve-pmp-02">LVE-PMP-02 · Grundfos Hydro MPC Booster Pump Set</a>
+                    <div class="cc-meta">2 x CR 15-04 · 5.5 kW Variable Speed</div>
+                  </td>
+                  <td>Water &amp; Plumbing</td>
+                  <td>Basement Car Park</td>
+                  <td><span class="cc-status cc-status--success">Good</span></td>
+                  <td><span class="cc-status cc-status--success">Active</span></td>
+                  <td>
+                    <strong>Amara Bello</strong> (Site supervisor)
+                    <div class="cc-meta cc-tabular">Assigned 01 Nov 2026, 11:40 WAT</div>
+                  </td>
+                  <td>
+                    <div class="cc-row" style="gap: 8px;">
+                      <button type="button" class="cc-button cc-button--secondary cc-button--small js-mutation-btn">Handover custody</button>
+                      <button type="button" class="cc-button cc-button--text cc-button--small">Timeline (1)</button>
+                    </div>
+                  </td>
+                </tr>
+                <tr data-zone="Ground Floor">
+                  <td>
+                    <a href="#asset-lve-elv-01">LVE-ELV-01 · Kone MonoSpace 500 Passenger Lift #1</a>
+                    <div class="cc-meta">13-Person / 1,000 kg · 6 Stops</div>
+                  </td>
+                  <td>Vertical Transport</td>
+                  <td>Ground Floor</td>
+                  <td><span class="cc-status cc-status--info">Under scheduled service</span></td>
+                  <td><span class="cc-status cc-status--success">Active</span></td>
+                  <td>
+                    <strong>Chidi Okafor</strong> (Operations manager)
+                    <div class="cc-meta cc-tabular">Assigned 01 Nov 2026, 11:45 WAT</div>
+                  </td>
+                  <td>
+                    <div class="cc-row" style="gap: 8px;">
+                      <button type="button" class="cc-button cc-button--secondary cc-button--small js-mutation-btn">Handover custody</button>
+                      <button type="button" class="cc-button cc-button--text cc-button--small">Timeline (5)</button>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- 14. pagination -->
+          <div class="cc-row cc-spread" id="assets-pagination-bar" style="margin-top: 8px;">
+            <span class="cc-meta cc-tabular">Page 1 of 4 · Showing 1 to 5 of 18 total registered assets in LVE-VI-01</span>
+            <nav class="cc-row" style="gap: 6px;" aria-label="Pagination">
+              <a href="#page-1" class="cc-page-link" aria-current="page">1</a>
+              <a href="#page-2" class="cc-page-link">2</a>
+              <a href="#page-3" class="cc-page-link">3</a>
+              <a href="#page-4" class="cc-page-link">4</a>
+            </nav>
+          </div>
+        </div>
+
+        <!-- TAB PANEL 2: SITE ZONES -->
+        <div id="panel-zones" role="tabpanel" aria-labelledby="tab-zones" class="cc-stack" hidden>
+          <div class="cc-table-wrap">
+            <table class="cc-table">
+              <caption>Defined site zones nested under Victoria Island Retail Plaza (LVE-VI-01).</caption>
+              <thead>
+                <tr>
+                  <th scope="col">Zone name</th>
+                  <th scope="col">Floor / area reference</th>
+                  <th scope="col" class="cc-num-right">Registered assets</th>
+                  <th scope="col">Primary supervisor</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td>Generator House</td><td>Rear utility compound · Acoustic enclosure</td><td class="cc-num-right">4</td><td>Amara Bello</td></tr>
+                <tr><td>Ground Floor</td><td>Main retail concourse &amp; lift lobby</td><td class="cc-num-right">6</td><td>Chidi Okafor</td></tr>
+                <tr><td>Roof Plant</td><td>Level 6 mechanical deck &amp; VRV condensers</td><td class="cc-num-right">5</td><td>Musa Ibrahim</td></tr>
+                <tr><td>Basement Car Park</td><td>Sub-level B1 water treatment &amp; sump pumps</td><td class="cc-num-right">3</td><td>Amara Bello</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- TAB PANEL 3 & 4 placeholders -->
+        <div id="panel-inspections" role="tabpanel" aria-labelledby="tab-inspections" class="cc-card" hidden>
+          <h3>Scheduled &amp; completed inspections for LVE-VI-01 (6)</h3>
+          <p>Latest scheduled walkthrough: <strong>INSP-2026-089 (Generator &amp; Plant Room Checklist · v2)</strong> assigned to Amara Bello for 03 Nov 2026.</p>
+        </div>
+        <div id="panel-work-orders" role="tabpanel" aria-labelledby="tab-work-orders" class="cc-card" hidden>
+          <h3>Maintenance work orders for LVE-VI-01 (4)</h3>
+          <p>Active high-priority job: <strong>WO-2026-0142 (Replace frayed alternator drive belt on LVE-GEN-01)</strong> assigned to Tunde Adeyemi.</p>
+        </div>
+      </section>
+
+      <!-- 4. recommendation-callout (Single pale-teal callout per surface rule) -->
+      <section class="cc-section" aria-label="Operational governance note">
+        <div class="cc-callout">
+          <div class="cc-callout__label">Custody &amp; Audit Governance · LVE-VI-01</div>
+          <div class="cc-callout__body">
+            Every asset registered under <strong>Lagoon View Estates Ltd</strong> carries an explicit <strong>Accountable custodian</strong> in the append-only <code>asset_custody</code> ledger, kept strictly distinct from the <strong>Assigned technician / contractor</strong> executing individual maintenance work orders. Currently, <code>LVE-GEN-01</code> has an active work order (<code>WO-2026-0142</code>) raised from today's plant room inspection.
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- 21. modal-dialog: Update GPS Location (demonstrating WCAG 2.2 SC 2.5.7 Dragging Alternative) -->
+  <div id="modal-gps-backdrop" class="cc-modal-backdrop" hidden>
+    <div class="cc-modal" role="dialog" aria-modal="true" aria-labelledby="modal-gps-title" aria-describedby="modal-gps-desc">
+      <div>
+        <div class="cc-kicker">Append-Only Geospatial Update · FR-3 &amp; WCAG 2.2 SC 2.5.7</div>
+        <h3 id="modal-gps-title" style="margin-top: 4px;">Update property GPS coordinates</h3>
+      </div>
+      <hr class="cc-rule" />
+      <p id="modal-gps-desc" style="font-size: 14px;">
+        Saving a new coordinate appends a row to the <code>locations</code> history table and updates the canonical <code>properties.geom</code> point. Previous readings are preserved permanently. You may capture device GPS or enter coordinates directly without dragging the map pin.
+      </p>
+      <form id="form-update-gps" class="cc-stack" style="gap: 12px;">
+        <div class="cc-row">
+          <button type="button" id="btn-use-device-gps" class="cc-button cc-button--secondary cc-button--small">Use current device GPS (±4.5 m)</button>
+          <span class="cc-meta" id="gps-capture-status">Single-tap alternative to map pin dragging</span>
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+          <div class="cc-field">
+            <label for="input-lat" class="cc-label">Latitude (WGS84)</label>
+            <input id="input-lat" type="text" inputmode="decimal" class="cc-input cc-tabular" value="6.4284" required />
+          </div>
+          <div class="cc-field">
+            <label for="input-lng" class="cc-label">Longitude (WGS84)</label>
+            <input id="input-lng" type="text" inputmode="decimal" class="cc-input cc-tabular" value="3.4222" required />
+          </div>
+        </div>
+        <div class="cc-field">
+          <label for="input-gps-note" class="cc-label">Survey note (optional)</label>
+          <input id="input-gps-note" type="text" class="cc-input" value="Verified at main security gatehouse entrance" />
+        </div>
+        <div class="cc-row" style="justify-content: flex-end; margin-top: 8px;">
+          <button type="button" id="btn-cancel-gps-modal" class="cc-button cc-button--secondary">Cancel</button>
+          <button type="submit" class="cc-button cc-button--primary">Append coordinate reading</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      // 1. UX State Switcher
+      const stateButtons = document.querySelectorAll('[data-ux-state]');
+      const metricsDefault = document.getElementById('metrics-default');
+      const metricsSkeleton = document.getElementById('metrics-skeleton');
+      const tableDefault = document.getElementById('assets-table-default');
+      const tableSkeleton = document.getElementById('assets-table-skeleton');
+      const emptyFirst = document.getElementById('assets-empty-first');
+      const emptyFilter = document.getElementById('assets-empty-filter');
+      const paginationBar = document.getElementById('assets-pagination-bar');
+      const filterBar = document.getElementById('asset-filter-bar');
+      const errorSection = document.getElementById('section-register-asset-error');
+      const bannerOffline = document.getElementById('banner-offline');
+      const bannerReadonly = document.getElementById('banner-readonly');
+      const mapSvg = document.getElementById('map-svg-canvas');
+      const mapPin = document.getElementById('map-pin-label');
+      const mapOverlay = document.getElementById('map-overlay-card');
+      const mapFallback = document.getElementById('map-offline-fallback');
+      const headerMutationActions = document.getElementById('header-mutation-actions');
+      const roleBadge = document.getElementById('active-role-badge');
+      const userName = document.getElementById('active-user-name');
+
+      function applyState(state) {
+        stateButtons.forEach((btn) => {
+          btn.setAttribute('aria-pressed', btn.getAttribute('data-ux-state') === state ? 'true' : 'false');
+        });
+
+        // Reset defaults
+        metricsDefault.hidden = false;
+        metricsSkeleton.hidden = true;
+        tableDefault.hidden = false;
+        tableSkeleton.hidden = true;
+        emptyFirst.hidden = true;
+        emptyFilter.hidden = true;
+        paginationBar.hidden = false;
+        filterBar.hidden = false;
+        errorSection.hidden = true;
+        bannerOffline.hidden = true;
+        bannerReadonly.hidden = true;
+        mapSvg.style.display = 'block';
+        mapPin.hidden = false;
+        mapOverlay.hidden = false;
+        mapFallback.hidden = true;
+        headerMutationActions.hidden = false;
+        roleBadge.textContent = 'Operations manager';
+        userName.textContent = 'Chidi Okafor';
+        document.querySelectorAll('.js-mutation-btn').forEach((b) => { b.hidden = false; });
+
+        if (state === 'loading') {
+          metricsDefault.hidden = true;
+          metricsSkeleton.hidden = false;
+          tableDefault.hidden = true;
+          tableSkeleton.hidden = false;
+          paginationBar.hidden = true;
+        } else if (state === 'empty-first') {
+          tableDefault.hidden = true;
+          paginationBar.hidden = true;
+          filterBar.hidden = true;
+          emptyFirst.hidden = false;
+          document.getElementById('metric-asset-count').textContent = '0';
+        } else {
+          document.getElementById('metric-asset-count').textContent = '18';
+        }
+
+        if (state === 'error-422') {
+          errorSection.hidden = false;
+          document.getElementById('input-asset-tag').focus();
+        } else if (state === 'offline-map') {
+          bannerOffline.hidden = false;
+          mapSvg.style.display = 'none';
+          mapPin.hidden = true;
+          mapOverlay.hidden = true;
+          mapFallback.hidden = false;
+        } else if (state === 'readonly-role') {
+          bannerReadonly.hidden = false;
+          headerMutationActions.hidden = true;
+          roleBadge.textContent = 'Technician (read-only)';
+          userName.textContent = 'Tunde Adeyemi';
+          document.querySelectorAll('.js-mutation-btn').forEach((b) => { b.hidden = true; });
+        }
+      }
+
+      stateButtons.forEach((btn) => {
+        btn.addEventListener('click', () => applyState(btn.getAttribute('data-ux-state')));
+      });
+
+      // 2. Tier-2 Client Scope Combobox
+      const dropdown = document.getElementById('client-scope-dropdown');
+      const trigger = document.getElementById('client-scope-trigger');
+      const listbox = document.getElementById('client-scope-listbox');
+      const valueEl = document.getElementById('client-scope-value');
+      const options = Array.from(listbox.querySelectorAll('[role="option"]'));
+
+      function closeDropdown(restoreFocus) {
+        trigger.setAttribute('aria-expanded', 'false');
+        listbox.hidden = true;
+        if (restoreFocus) trigger.focus();
+      }
+
+      trigger.addEventListener('click', () => {
+        const isOpen = trigger.getAttribute('aria-expanded') === 'true';
+        trigger.setAttribute('aria-expanded', isOpen ? 'false' : 'true');
+        listbox.hidden = isOpen;
+      });
+
+      options.forEach((opt) => {
+        opt.addEventListener('click', () => {
+          options.forEach((o) => o.setAttribute('aria-selected', 'false'));
+          opt.setAttribute('aria-selected', 'true');
+          valueEl.textContent = opt.getAttribute('data-client');
+          closeDropdown(true);
+        });
+      });
+
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && trigger.getAttribute('aria-expanded') === 'true') {
+          closeDropdown(true);
+        }
+      });
+
+      // 3. Tabs with keyboard roving focus
+      const tabs = Array.from(document.querySelectorAll('[role="tab"]'));
+      const panels = Array.from(document.querySelectorAll('[role="tabpanel"]'));
+
+      function activateTab(tab) {
+        tabs.forEach((t) => {
+          const active = t === tab;
+          t.setAttribute('aria-selected', active ? 'true' : 'false');
+          t.setAttribute('tabindex', active ? '0' : '-1');
+        });
+        panels.forEach((p) => {
+          p.hidden = p.id !== tab.getAttribute('aria-controls');
+        });
+      }
+
+      tabs.forEach((tab, idx) => {
+        tab.addEventListener('click', () => activateTab(tab));
+        tab.addEventListener('keydown', (e) => {
+          if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
+            e.preventDefault();
+            const nextIdx = e.key === 'ArrowRight' ? (idx + 1) % tabs.length : (idx - 1 + tabs.length) % tabs.length;
+            tabs[nextIdx].focus();
+            activateTab(tabs[nextIdx]);
+          }
+        });
+      });
+
+      // 4. Live Asset Zone Filter & Search
+      const zoneButtons = Array.from(document.querySelectorAll('[data-zone-filter]'));
+      const searchInput = document.getElementById('asset-search');
+      const clearBtn = document.getElementById('btn-clear-asset-filters');
+      const assetRows = Array.from(document.querySelectorAll('#asset-rows-tbody tr'));
+      const countLabel = document.getElementById('asset-filter-count');
+      let currentZone = 'all';
+
+      function filterAssets() {
+        const query = searchInput.value.trim().toLowerCase();
+        let visible = 0;
+        assetRows.forEach((row) => {
+          const matchesZone = currentZone === 'all' || row.getAttribute('data-zone') === currentZone;
+          const matchesQuery = !query || row.textContent.toLowerCase().includes(query);
+          const show = matchesZone && matchesQuery;
+          row.hidden = !show;
+          if (show) visible++;
+        });
+        const isFiltered = currentZone !== 'all' || query.length > 0;
+        clearBtn.hidden = !isFiltered;
+        tableDefault.hidden = visible === 0;
+        emptyFilter.hidden = visible !== 0;
+        countLabel.textContent = `Showing ${visible} of 18 assets scoped to Lagoon View Estates Ltd`;
+      }
+
+      zoneButtons.forEach((btn) => {
+        btn.addEventListener('click', () => {
+          currentZone = btn.getAttribute('data-zone-filter');
+          zoneButtons.forEach((b) => b.setAttribute('aria-pressed', b === btn ? 'true' : 'false'));
+          filterAssets();
+        });
+      });
+      searchInput.addEventListener('input', filterAssets);
+      clearBtn.addEventListener('click', () => {
+        currentZone = 'all';
+        searchInput.value = '';
+        zoneButtons.forEach((b) => b.setAttribute('aria-pressed', b.getAttribute('data-zone-filter') === 'all' ? 'true' : 'false'));
+        filterAssets();
+      });
+
+      // 5. GPS Location Modal & Register Asset Drawer
+      const gpsModal = document.getElementById('modal-gps-backdrop');
+      const openGpsBtn = document.getElementById('btn-open-gps-modal');
+      const cancelGpsBtn = document.getElementById('btn-cancel-gps-modal');
+      const useDeviceGpsBtn = document.getElementById('btn-use-device-gps');
+      const gpsForm = document.getElementById('form-update-gps');
+
+      openGpsBtn.addEventListener('click', () => {
+        gpsModal.hidden = false;
+        document.getElementById('input-lat').focus();
+      });
+      cancelGpsBtn.addEventListener('click', () => {
+        gpsModal.hidden = true;
+        openGpsBtn.focus();
+      });
+      useDeviceGpsBtn.addEventListener('click', () => {
+        document.getElementById('input-lat').value = '6.4286';
+        document.getElementById('input-lng').value = '3.4225';
+        document.getElementById('gps-capture-status').textContent = 'Captured browser GPS: 6.4286° N, 3.4225° E (±4.5 m)';
+      });
+      gpsForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const lat = document.getElementById('input-lat').value;
+        const lng = document.getElementById('input-lng').value;
+        document.getElementById('canonical-latlng').textContent = `${lat}° N, ${lng}° E`;
+        document.getElementById('banner-saved-text').textContent = `Appended new canonical coordinate (${lat}° N, ${lng}° E) to locations history. Previous reading preserved.`;
+        document.getElementById('banner-saved').hidden = false;
+        gpsModal.hidden = true;
+        openGpsBtn.focus();
+      });
+
+      document.getElementById('btn-open-asset-form').addEventListener('click', () => {
+        errorSection.hidden = false;
+        document.getElementById('input-asset-tag').focus();
+      });
+      document.getElementById('btn-close-asset-form').addEventListener('click', () => {
+        errorSection.hidden = true;
+        document.getElementById('btn-open-asset-form').focus();
+      });
+    })();
+  </script>
+</body>
+</html>

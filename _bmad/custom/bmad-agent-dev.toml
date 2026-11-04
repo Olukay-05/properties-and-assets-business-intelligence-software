@@ -1,0 +1,5 @@
+[agent]
+persistent_facts = [
+  "For high-risk stories (payments, authentication, uploads, AI, bookings/inventory, webhooks, queues, or admin access), read the flag registry and run the relevant story-level Architecture Auditor gate before implementation.",
+  "Implement existing ADR and registry constraints rather than redesigning them. Mark a constraint resolved only after implementation evidence is present.",
+]

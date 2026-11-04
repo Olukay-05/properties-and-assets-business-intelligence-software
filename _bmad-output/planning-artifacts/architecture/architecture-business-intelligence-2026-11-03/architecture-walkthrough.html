@@ -1,0 +1,941 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Property & Asset Intelligence — Dev Team Architecture Walkthrough</title>
+  <style>
+    :root {
+      --bg: #fbfbfa;
+      --surface: #ffffff;
+      --surface-subtle: #f4f3ef;
+      --text: #1a1a19;
+      --text-muted: #5c5b57;
+      --border: #e2e0d8;
+      --primary: #1e3a2f; /* Deep Evergreen */
+      --primary-accent: #2d5a49;
+      --accent-warm: #d97736; /* Clay / Ochre */
+      --badge-bg: #e8edea;
+      --badge-text: #1e3a2f;
+      --code-bg: #272822;
+      --code-text: #f8f8f2;
+      --font-serif: "Newsreader", "Charter", "Georgia", serif;
+      --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+      --font-mono: "JetBrains Mono", "SF Mono", Consolas, Menlo, monospace;
+      --shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+    }
+
+    [data-theme="dark"] {
+      --bg: #141514;
+      --surface: #1c1d1c;
+      --surface-subtle: #242624;
+      --text: #ededeb;
+      --text-muted: #9e9d98;
+      --border: #2e302e;
+      --primary: #529b7a;
+      --primary-accent: #6eb091;
+      --accent-warm: #e68a4d;
+      --badge-bg: #1d2e25;
+      --badge-text: #8cd4b0;
+      --code-bg: #111211;
+      --code-text: #e1e3e1;
+      --shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      font-family: var(--font-sans);
+      line-height: 1.6;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      overflow: hidden;
+      transition: background-color 0.2s ease, color 0.2s ease;
+    }
+
+    /* Header Nav */
+    header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 0.75rem 1.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 10;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .brand-title {
+      font-family: var(--font-serif);
+      font-size: 1.15rem;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+      color: var(--primary);
+    }
+
+    .brand-tag {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      background: var(--badge-bg);
+      color: var(--badge-text);
+      padding: 0.15rem 0.5rem;
+      border-radius: 4px;
+      font-weight: 600;
+    }
+
+    .deck-controls {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .slide-counter {
+      font-size: 0.85rem;
+      font-family: var(--font-mono);
+      color: var(--text-muted);
+      min-width: 60px;
+      text-align: center;
+    }
+
+    button {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 0.4rem 0.8rem;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      font-weight: 500;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      transition: all 0.15s ease;
+    }
+
+    button:hover:not(:disabled) {
+      border-color: var(--primary);
+      color: var(--primary);
+    }
+
+    button:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
+    button.btn-primary {
+      background: var(--primary);
+      color: #ffffff;
+      border-color: var(--primary);
+    }
+
+    button.btn-primary:hover:not(:disabled) {
+      background: var(--primary-accent);
+      color: #ffffff;
+    }
+
+    /* Main Container */
+    main {
+      flex: 1;
+      display: flex;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Sidebar Table of Contents */
+    nav#toc {
+      width: 280px;
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      overflow-y: auto;
+      padding: 1rem 0;
+      transition: transform 0.2s ease;
+    }
+
+    nav#toc.collapsed {
+      display: none;
+    }
+
+    .toc-item {
+      padding: 0.55rem 1.25rem;
+      font-size: 0.85rem;
+      cursor: pointer;
+      border-left: 3px solid transparent;
+      color: var(--text-muted);
+      display: flex;
+      gap: 0.5rem;
+      align-items: baseline;
+    }
+
+    .toc-item:hover {
+      background: var(--surface-subtle);
+      color: var(--text);
+    }
+
+    .toc-item.active {
+      background: var(--surface-subtle);
+      border-left-color: var(--primary);
+      color: var(--primary);
+      font-weight: 600;
+    }
+
+    .toc-num {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      opacity: 0.7;
+    }
+
+    /* Slide Stage */
+    #stage {
+      flex: 1;
+      overflow-y: auto;
+      padding: 2.5rem 3.5rem;
+      display: flex;
+      justify-content: center;
+    }
+
+    .slide {
+      display: none;
+      width: 100%;
+      max-width: 960px;
+      animation: fadeIn 0.2s ease;
+    }
+
+    .slide.active {
+      display: block;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Typography & Slide Elements */
+    .slide-kicker {
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      font-weight: 700;
+      color: var(--accent-warm);
+      margin-bottom: 0.5rem;
+    }
+
+    h1 {
+      font-family: var(--font-serif);
+      font-size: 2.2rem;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+      line-height: 1.25;
+      margin-bottom: 1rem;
+      color: var(--primary);
+    }
+
+    h2 {
+      font-family: var(--font-serif);
+      font-size: 1.4rem;
+      font-weight: 600;
+      margin: 1.75rem 0 0.75rem 0;
+      color: var(--text);
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 0.35rem;
+    }
+
+    p {
+      margin-bottom: 1rem;
+      font-size: 1rem;
+      color: var(--text);
+    }
+
+    .lead {
+      font-size: 1.15rem;
+      line-height: 1.6;
+      color: var(--text-muted);
+      margin-bottom: 1.5rem;
+    }
+
+    /* Cards & Grids */
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.25rem;
+      margin: 1.5rem 0;
+    }
+
+    .grid-3 {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 1rem;
+      margin: 1.5rem 0;
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1.25rem;
+      box-shadow: var(--shadow);
+    }
+
+    .card-title {
+      font-family: var(--font-serif);
+      font-size: 1.1rem;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+      color: var(--primary);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .card p {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      margin-bottom: 0.5rem;
+    }
+
+    .card ul {
+      padding-left: 1.25rem;
+      font-size: 0.88rem;
+      color: var(--text);
+    }
+
+    .card li {
+      margin-bottom: 0.35rem;
+    }
+
+    /* Callouts & Alert Boxes */
+    .callout {
+      border-left: 4px solid var(--primary);
+      background: var(--surface-subtle);
+      padding: 1rem 1.25rem;
+      border-radius: 0 6px 6px 0;
+      margin: 1.25rem 0;
+      font-size: 0.95rem;
+    }
+
+    .callout.alert {
+      border-left-color: var(--accent-warm);
+    }
+
+    .callout-title {
+      font-weight: 700;
+      margin-bottom: 0.3rem;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    /* Tables */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 1.25rem 0;
+      font-size: 0.88rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      overflow: hidden;
+    }
+
+    th, td {
+      padding: 0.65rem 1rem;
+      border-bottom: 1px solid var(--border);
+      text-align: left;
+    }
+
+    th {
+      background: var(--surface-subtle);
+      font-weight: 600;
+      color: var(--text);
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    tr:last-child td {
+      border-bottom: none;
+    }
+
+    /* Code Blocks */
+    pre, code {
+      font-family: var(--font-mono);
+      font-size: 0.85rem;
+    }
+
+    p code, li code, td code {
+      background: var(--surface-subtle);
+      padding: 0.15rem 0.35rem;
+      border-radius: 4px;
+      border: 1px solid var(--border);
+      color: var(--primary);
+    }
+
+    pre {
+      background: var(--code-bg);
+      color: var(--code-text);
+      padding: 1rem;
+      border-radius: 6px;
+      overflow-x: auto;
+      margin: 1rem 0;
+      line-height: 1.5;
+    }
+
+    /* Footer */
+    footer {
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      padding: 0.6rem 1.5rem;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .shortcut-hints span {
+      display: inline-block;
+      background: var(--surface-subtle);
+      border: 1px solid var(--border);
+      padding: 0.1rem 0.35rem;
+      border-radius: 3px;
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      margin: 0 0.2rem;
+    }
+
+    /* Flow diagram pills */
+    .flow-steps {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin: 1rem 0;
+      overflow-x: auto;
+      padding-bottom: 0.5rem;
+    }
+
+    .flow-step {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      padding: 0.6rem 1rem;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      white-space: nowrap;
+      text-align: center;
+    }
+
+    .flow-step.active {
+      border-color: var(--primary);
+      background: var(--badge-bg);
+      color: var(--primary);
+    }
+
+    .flow-arrow {
+      color: var(--text-muted);
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="brand">
+      <span class="brand-title">Property & Asset Intelligence</span>
+      <span class="brand-tag">Phase 1 Architecture Spine</span>
+    </div>
+    <div class="deck-controls">
+      <button id="btn-toc" title="Toggle Table of Contents">📑 Menu</button>
+      <button id="btn-theme" title="Toggle Dark/Light Mode">🌓 Theme</button>
+      <button id="btn-prev" title="Previous Slide (Left Arrow)">← Prev</button>
+      <span class="slide-counter" id="counter">1 / 10</span>
+      <button id="btn-next" class="btn-primary" title="Next Slide (Right Arrow or Space)">Next →</button>
+    </div>
+  </header>
+
+  <main>
+    <nav id="toc">
+      <div class="toc-item active" data-index="0"><span class="toc-num">01</span> Overview & Invariants</div>
+      <div class="toc-item" data-index="1"><span class="toc-num">02</span> The 3 Core Workflows</div>
+      <div class="toc-item" data-index="2"><span class="toc-num">03</span> Architecture Paradigm</div>
+      <div class="toc-item" data-index="3"><span class="toc-num">04</span> Multi-Tenancy & Isolation</div>
+      <div class="toc-item" data-index="4"><span class="toc-num">05</span> Geospatial Implementation</div>
+      <div class="toc-item" data-index="5"><span class="toc-num">06</span> Domain Module Ownership</div>
+      <div class="toc-item" data-index="6"><span class="toc-num">07</span> Client Scope Enforcement</div>
+      <div class="toc-item" data-index="7"><span class="toc-num">08</span> Full-Stack Contracts & API</div>
+      <div class="toc-item" data-index="8"><span class="toc-num">09</span> Infrastructure & Operations</div>
+      <div class="toc-item" data-index="9"><span class="toc-num">10</span> Delivery Gates & Next Steps</div>
+    </nav>
+
+    <div id="stage">
+
+      <!-- SLIDE 1 -->
+      <section class="slide active">
+        <div class="slide-kicker">Slide 01 — Executive Overview</div>
+        <h1>Architecture Walkthrough & Developer Spine</h1>
+        <p class="lead">A modular monolith for Nigerian facilities management (FM) companies, delivering undeniable operational proof of work without cloud or vendor lock-in.</p>
+        
+        <div class="grid-3">
+          <div class="card">
+            <div class="card-title">🎯 The Product Goal</div>
+            <p>Give FM operators a reliable system where sites, assets, checklists, work orders, and proof photos are registered once and rendered into defensible client reports on demand.</p>
+          </div>
+          <div class="card">
+            <div class="card-title">📐 The 5 Standing Rules</div>
+            <ul>
+              <li><strong>No UI logic:</strong> Controllers & React components are thin adapters.</li>
+              <li><strong>Unified service layer:</strong> Web, API, and future MCP invoke identical services.</li>
+              <li><strong>No provider lock-in:</strong> Portable Postgres, S3 API, swappable tiles.</li>
+              <li><strong>Strict tenancy:</strong> Session-only tenant resolution; RLS backstop.</li>
+              <li><strong>Verified docs:</strong> Document what is tested, not what is planned.</li>
+            </ul>
+          </div>
+          <div class="card">
+            <div class="card-title">⚡ Purpose of this Deck</div>
+            <p>Provide builders with the durable invariants that prevent architectural divergence across epics and stories. Every rule here binds the codebase.</p>
+          </div>
+        </div>
+
+        <div class="callout">
+          <div class="callout-title">💡 The Core Architecture Test</div>
+          If two developers built their modules independently, could they make incompatible choices? If yes, this architecture fixes that call. Everything else is intentionally deferred.
+        </div>
+      </section>
+
+      <!-- SLIDE 2 -->
+      <section class="slide">
+        <div class="slide-kicker">Slide 02 — Scope Boundaries</div>
+        <h1>The Three MVP Workflows</h1>
+        <p class="lead">The MVP consists strictly of three complete workflows. Nothing ships until all three run end-to-end and pass automated tests.</p>
+
+        <div class="flow-steps">
+          <div class="flow-step active">1. Registration<br><small>Org / Client / Property / Asset</small></div>
+          <div class="flow-arrow">➔</div>
+          <div class="flow-step active">2. Inspection & Maintenance<br><small>Checklists / Faults / Work Orders</small></div>
+          <div class="flow-arrow">➔</div>
+          <div class="flow-step active">3. Client Reporting<br><small>Compiled Evidence / PDF & CSV</small></div>
+        </div>
+
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-title">✅ In Scope for Phase 1</div>
+            <ul>
+              <li><strong>Workflow 1:</strong> Organisation, client accounts, properties with canonical GPS points, zones, assets, and custody history.</li>
+              <li><strong>Workflow 2:</strong> Versioned inspection templates, photo-verified visits, maintenance requests, and work order state machine.</li>
+              <li><strong>Workflow 3:</strong> Client period reporting, dual PDF/CSV generation, and private signed URL evidence access.</li>
+              <li><strong>Platform Foundations:</strong> Multi-tenancy (RLS + app scope), 6 core RBAC roles, audit log, and NDPA compliance readiness.</li>
+            </ul>
+          </div>
+          <div class="card">
+            <div class="card-title">🚫 Explicitly Deferred (Do Not Build)</div>
+            <ul>
+              <li><strong>Client Self-Service Portal:</strong> Clients receive exported reports; no client login in v1.</li>
+              <li><strong>External Integrations:</strong> No OAuth 2.1, no <code>api_clients</code> table, no webhooks, no MCP tools (Phase 3).</li>
+              <li><strong>Native / Offline:</strong> Single responsive web application; no offline sync engine or desktop builds.</li>
+              <li><strong>Complex Modules:</strong> No billing engine (pilots invoiced manually), no parts/inventory, no IoT sensors.</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <!-- SLIDE 3 -->
+      <section class="slide">
+        <div class="slide-kicker">Slide 03 — Design Paradigm</div>
+        <h1>Modular Monolith with Ports</h1>
+        <p class="lead">A clean, layered architecture inside a single Laravel codebase. External boundaries adapt incoming protocols into strongly-typed application service calls.</p>
+
+        <div class="card" style="margin-bottom: 1.5rem;">
+          <div class="card-title">🧱 Dependency Direction: Inward Only</div>
+          <pre><code>[Inertia Web Controllers]   [REST /api/v1 Endpoints]   [Queued Jobs & Workers]
+                   │                            │                         │
+                   └────────────────────────────┼─────────────────────────┘
+                                                ▼
+                             ┌───────────────────────────────────────┐
+                             │    APPLICATION SERVICES (per module)  │
+                             │  Validation • Authorisation • Audit   │
+                             └──────────────────┬────────────────────┘
+                                                ▼
+                             ┌───────────────────────────────────────┐
+                             │       DOMAIN ENTITIES & DTOs          │
+                             │   Eloquent Models • Spatie Data DTOs  │
+                             └──────────────────┬────────────────────┘
+                                                ▼
+                             ┌───────────────────────────────────────┐
+                             │          INFRASTRUCTURE PORTS         │
+                             │  Postgres/PostGIS • Cloudflare R2     │
+                             └───────────────────────────────────────┘</code></pre>
+        </div>
+
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-title">AD-1: Thin Adapters Rule</div>
+            <p>An adapter (Inertia or REST controller) only does 3 things:</p>
+            <ol style="padding-left: 1.25rem; font-size: 0.88rem;">
+              <li>Validates HTTP request shape via FormRequest.</li>
+              <li>Calls exactly one application service method.</li>
+              <li>Maps the output to an Inertia response or <code>{ data, meta }</code>.</li>
+            </ol>
+          </div>
+          <div class="card">
+            <div class="card-title">AD-16: Typed Full-Stack Contracts</div>
+            <p>Every service accepts and returns Spatie <code>Data</code> objects. These DTOs automatically generate TypeScript definitions in <code>resources/js/types/generated/</code>, eliminating manual interface duplication.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- SLIDE 4 -->
+      <section class="slide">
+        <div class="slide-kicker">Slide 04 — Security & Tenancy</div>
+        <h1>Two-Layer Tenant Isolation</h1>
+        <p class="lead">Isolation between FM companies is absolute. Application queries and database row-level security (RLS) form a defense-in-depth barrier.</p>
+
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-title">Layer 1: Laravel TenantContext (App)</div>
+            <ul>
+              <li><strong>Session Only:</strong> Tenant is resolved exclusively from the authenticated user's <code>memberships</code> row.</li>
+              <li><strong>Anti-Spoofing:</strong> <code>organisation_id</code> in request bodies or query params is rejected/ignored.</li>
+              <li><strong>Global Scope:</strong> Eloquent auto-filters all queries by active <code>organisation_id</code>.</li>
+              <li><strong>Model Hook:</strong> Model <code>creating</code> hook automatically stamps <code>organisation_id</code>.</li>
+            </ul>
+          </div>
+          <div class="card">
+            <div class="card-title">Layer 2: PostgreSQL RLS (Database Backstop)</div>
+            <ul>
+              <li><strong>Enforced on all tenant tables:</strong><br><code>ENABLE ROW LEVEL SECURITY; FORCE RLS;</code></li>
+              <li><strong>Policy:</strong><br><code>organisation_id = current_setting('app.org_id', true)::uuid</code></li>
+              <li><strong>Connection Pooling Safety:</strong> Middleware issues <code>SET LOCAL app.org_id = ?</code> inside a transaction. Works seamlessly with Neon's transaction-mode PgBouncer pooler.</li>
+              <li><strong>Non-Owner Role:</strong> Runtime connects as a role without <code>BYPASSRLS</code>.</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="callout alert">
+          <div class="callout-title">⚠️ Non-Negotiable CI Gate (AD-19)</div>
+          A tenant isolation matrix runs on every commit. For each core entity, it tests that Organisation B cannot access Organisation A's data across <strong>5 layers: HTTP, Service, Raw SQL, Background Jobs, and Signed URLs</strong>.
+        </div>
+      </section>
+
+      <!-- SLIDE 5 -->
+      <section class="slide">
+        <div class="slide-kicker">Slide 05 — Geospatial Implementation</div>
+        <h1>Canonical Geospatial Integrity</h1>
+        <p class="lead">Coordinates are stored once in PostGIS. Metric distances are computed via the geography cast, eliminating classic coordinate inversion and degree errors.</p>
+
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-title">Canonical Storage (AD-7)</div>
+            <ul>
+              <li><strong>PostGIS Column:</strong> <code>properties.geom geometry(Point, 4326)</code> with GiST indexing.</li>
+              <li><strong>No Duplicate Columns:</strong> Latitude and longitude are never stored in separate columns; they are derived via <code>ST_Y(geom)</code> and <code>ST_X(geom)</code> in serializers.</li>
+              <li><strong>Single Mutator:</strong> <code>LocationService::setLocation()</code> is the only code path that writes coordinates.</li>
+              <li><strong>Append-Only History:</strong> Every coordinate change appends a <code>locations</code> history entry with accuracy, source, and timestamp.</li>
+            </ul>
+          </div>
+          <div class="card">
+            <div class="card-title">Metric Distance & Maps</div>
+            <ul>
+              <li><strong>Metre Accuracy:</strong> All distance checks cast to <code>::geography</code> inside a single helper:<br>
+              <code>Geo::distanceMetres()</code> and <code>Geo::withinMetres()</code>.</li>
+              <li><strong>No Raw ST_Distance:</strong> Running <code>ST_Distance</code> on raw geometry returns angular degrees (a critical bug); never permitted.</li>
+              <li><strong>Frontend Map:</strong> Rendered via MapLibre GL JS + OpenFreeMap vector tiles wrapped in a single <code>&lt;PropertyMap&gt;</code> component.</li>
+              <li><strong>Postcode Rule:</strong> Postcode is customer-entered reference text; never proves title or occupancy.</li>
+            </ul>
+          </div>
+        </div>
+
+        <pre><code>// Example canonical coordinate update
+LocationService::setLocation($property, lat: 6.5244, lng: 3.3792, accuracyM: 5.0, source: 'mobile_gps');
+// Executes: ST_SetSRID(ST_MakePoint(3.3792, 6.5244), 4326) and inserts into locations table.</code></pre>
+      </section>
+
+      <!-- SLIDE 6 -->
+      <section class="slide">
+        <div class="slide-kicker">Slide 06 — Domain Modularization</div>
+        <h1>Module Boundaries & Table Ownership</h1>
+        <p class="lead">Each table has exactly one owning module. Cross-module writes must go through the owner's application service.</p>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Module</th>
+              <th>Tables Owned (Exclusive Writers)</th>
+              <th>Allowed Cross-Module Dependencies</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Tenancy</strong></td>
+              <td><code>organisations</code>, <code>users</code>, <code>memberships</code>, <code>personal_access_tokens</code></td>
+              <td>Base module; depended on by all.</td>
+            </tr>
+            <tr>
+              <td><strong>Registry</strong></td>
+              <td><code>client_accounts</code>, <code>properties</code>, <code>locations</code>, <code>site_zones</code>, <code>assets</code>, <code>asset_custody</code></td>
+              <td>Reads Tenancy. Assembles dynamic Asset Timeline (AD-9).</td>
+            </tr>
+            <tr>
+              <td><strong>Inspections</strong></td>
+              <td><code>inspection_templates</code>, <code>inspection_template_items</code>, <code>inspections</code>, <code>inspection_responses</code></td>
+              <td>Reads Registry, calls Evidence for photos. Calls Maintenance to raise faults.</td>
+            </tr>
+            <tr>
+              <td><strong>Maintenance</strong></td>
+              <td><code>maintenance_requests</code>, <code>work_orders</code>, <code>work_order_events</code>, <code>contractors</code></td>
+              <td>Reads Registry, calls Evidence for photos. Owns state machine (AD-11).</td>
+            </tr>
+            <tr>
+              <td><strong>Evidence</strong></td>
+              <td><code>attachments</code></td>
+              <td>Manages private R2 uploads and 10-minute signed URLs.</td>
+            </tr>
+            <tr>
+              <td><strong>Reporting</strong></td>
+              <td><em>None</em> (Read-only query service)</td>
+              <td>Aggregates Registry, Inspections, Maintenance, and Evidence.</td>
+            </tr>
+            <tr>
+              <td><strong>Audit</strong></td>
+              <td><code>audit_events</code></td>
+              <td>Invoked atomically inside originating transactions.</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="callout">
+          <div class="callout-title">🔒 Read-Only Eloquent Relations Rule (AD-2)</div>
+          Eloquent relationships traversing domain boundaries (e.g. <code>$workOrder-&gt;attachments()</code>) are strictly <strong>read-only</strong>. Never call <code>$workOrder-&gt;attachments()-&gt;create()</code>; always call <code>EvidenceService::attachPhoto()</code>!
+        </div>
+      </section>
+
+      <!-- SLIDE 7 -->
+      <section class="slide">
+        <div class="slide-kicker">Slide 07 — Sub-Tenant Partitioning</div>
+        <h1>Client Account Scoping</h1>
+        <p class="lead">An FM company manages multiple client accounts. Permissions and data visibility must be strictly partitionable per client account.</p>
+
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-title">The Denormalization Rule (AD-5)</div>
+            <p>Every client-owned entity carries a direct <code>client_account_id</code> column stamped immutably at creation from its parent property:</p>
+            <ul>
+              <li><code>properties</code> &amp; <code>site_zones</code></li>
+              <li><code>assets</code> &amp; <code>asset_custody</code></li>
+              <li><code>inspections</code> &amp; <code>inspection_responses</code></li>
+              <li><code>maintenance_requests</code> &amp; <code>work_orders</code></li>
+              <li><code>attachments</code></li>
+            </ul>
+            <p><strong>Prevents:</strong> Slow, error-prone multi-table JOINs across modules to ascertain client ownership.</p>
+          </div>
+          <div class="card">
+            <div class="card-title">Enforcement Mechanism</div>
+            <ul>
+              <li><strong>User Scope:</strong> <code>memberships.client_scope</code> holds either <code>null</code> (full organization access) or an array of permitted client UUIDs.</li>
+              <li><strong>Global ClientScope:</strong> A global Eloquent scope automatically injects <code>whereIn('client_account_id', $scope)</code> when a user has a restricted scope.</li>
+              <li><strong>Service Authorisation:</strong> Services verify that target resources match the actor's permitted client accounts before mutation.</li>
+              <li><strong>Technician Isolation:</strong> Technicians assigned to Client A can never view or complete work orders for Client B.</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <!-- SLIDE 8 -->
+      <section class="slide">
+        <div class="slide-kicker">Slide 08 — Contracts & Error Handling</div>
+        <h1>Full-Stack Data Contracts & Errors</h1>
+        <p class="lead">Frontend and backend share deterministic data structures and standardized error responses.</p>
+
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-title">TypeScript & DTO Synchronization (AD-16)</div>
+            <pre><code>// app/Domain/Maintenance/Data/WorkOrderData.php
+class WorkOrderData extends Data {
+    public function __construct(
+        public string $id,
+        public string $title,
+        public WorkOrderStatus $status,
+        public ?string $assignedTechnicianId,
+        public CarbonImmutable $createdAt
+    ) {}
+}</code></pre>
+            <p>Runs through <code>spatie/typescript-transformer</code> to automatically generate exact TS types in <code>resources/js/types/generated/</code> on build.</p>
+          </div>
+          <div class="card">
+            <div class="card-title">Unified Error Envelope (AD-17)</div>
+            <p>Services throw <code>DomainException</code> subclasses with permanent machine-readable codes:</p>
+            <pre><code>// REST API error response (HTTP 422)
+{
+  "error": {
+    "code": "work_order_invalid_transition",
+    "message": "Cannot transition from Completed to In Progress."
+  }
+}</code></pre>
+            <p>Inertia requests automatically translate domain exceptions into form validation errors or flash toasts.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- SLIDE 9 -->
+      <section class="slide">
+        <div class="slide-kicker">Slide 09 — Runtime & Operations</div>
+        <h1>Infrastructure & Operational Topology</h1>
+        <p class="lead">Low-cost European hosting ensuring single-digit millisecond app-to-db latency, with verified backup and restore procedures.</p>
+
+        <div class="grid-3">
+          <div class="card">
+            <div class="card-title">🖥️ Compute & DB</div>
+            <ul>
+              <li><strong>App VPS:</strong> Hetzner (Germany), 4GB RAM (~$7–13/mo). Single Docker container runs Caddy, Laravel web, queue worker, and scheduler.</li>
+              <li><strong>Database:</strong> Neon Postgres 17 + PostGIS 3.5 (Frankfurt). App-to-DB roundtrip is 3–5ms.</li>
+              <li><strong>User Latency:</strong> Unavoidable user-to-EU latency from Lagos is ~110–150ms.</li>
+            </ul>
+          </div>
+          <div class="card">
+            <div class="card-title">📦 Storage & Reports</div>
+            <ul>
+              <li><strong>Object Storage:</strong> Cloudflare R2 (zero egress fees). Private bucket for photos and report exports.</li>
+              <li><strong>Signed URLs:</strong> Evidence served via 10-minute temporary signed URLs.</li>
+              <li><strong>PDF Worker:</strong> Spatie Laravel PDF (Chromium). Queue worker concurrency constrained to 1 to prevent VPS RAM spikes.</li>
+            </ul>
+          </div>
+          <div class="card">
+            <div class="card-title">🛡️ Backups & Portability</div>
+            <ul>
+              <li><strong>Dual Backups:</strong> Neon Point-in-Time Recovery (PITR) plus nightly <code>pg_dump</code> to a separate, isolated R2 bucket.</li>
+              <li><strong>Restoration Drill:</strong> Documented and tested restore drill required before pilot launch.</li>
+              <li><strong>Zero SDK Lock-in:</strong> S3-standard disk, standard Postgres. Repointing DB and storage moves the app to Nigeria if needed.</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <!-- SLIDE 10 -->
+      <section class="slide">
+        <div class="slide-kicker">Slide 10 — Execution Plan</div>
+        <h1>Delivery Gates & Downstream Path</h1>
+        <p class="lead">Next concrete steps for the development team to transition from architecture to verified working code.</p>
+
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-title">🚀 Week 1 Checkpoints</div>
+            <ul>
+              <li><strong>Checkpoint 1: PostGIS Spike (D1).</strong> Verify <code>CREATE EXTENSION postgis</code> on Neon in a dedicated schema and validate GiST/ST_DWithin operations before locking migrations.</li>
+              <li><strong>Checkpoint 2: Monorepo Scaffold.</strong> Initialize Laravel 13 React starter kit with Tailwind v4, shadcn/ui theme, and Pest test suite.</li>
+              <li><strong>Checkpoint 3: Design Tokens.</strong> Map design system colors and typography into Tailwind 4 <code>@theme</code>.</li>
+            </ul>
+          </div>
+          <div class="card">
+            <div class="card-title">📋 Downstream Skills Handoff</div>
+            <ul>
+              <li><strong>bmad-spec / bmad-create-epics-and-stories:</strong> Adopt this architecture spine as the binding constraint to generate epic and story specifications.</li>
+              <li><strong>Epic Breakdown:</strong>
+                <ol style="padding-left: 1.25rem; margin-top: 0.35rem;">
+                  <li>Foundations &amp; Tenancy (RLS + Auth)</li>
+                  <li>Workflow 1: Registry &amp; Assets</li>
+                  <li>Workflow 2: Inspections &amp; Work Orders</li>
+                  <li>Workflow 3: Reporting &amp; Evidence</li>
+                </ol>
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="callout">
+          <div class="callout-title">📖 Architectural Authority</div>
+          The complete architectural spine is persisted at <code>_bmad-output/planning-artifacts/architecture/architecture-business-intelligence-2026-11-03/ARCHITECTURE-SPINE.md</code>.
+        </div>
+      </section>
+
+    </div>
+  </main>
+
+  <footer>
+    <div class="shortcut-hints">
+      Navigate with <span>←</span> <span>→</span> or <span>Space</span> • <span>M</span> to toggle menu
+    </div>
+    <div>Property &amp; Asset Intelligence — Architecture Spine v1.0 (Final)</div>
+  </footer>
+
+  <script>
+    const slides = document.querySelectorAll('.slide');
+    const tocItems = document.querySelectorAll('.toc-item');
+    const counter = document.getElementById('counter');
+    const btnPrev = document.getElementById('btn-prev');
+    const btnNext = document.getElementById('btn-next');
+    const btnToc = document.getElementById('btn-toc');
+    const btnTheme = document.getElementById('btn-theme');
+    const toc = document.getElementById('toc');
+    let currentIndex = 0;
+
+    function showSlide(index) {
+      if (index < 0 || index >= slides.length) return;
+      slides[currentIndex].classList.remove('active');
+      tocItems[currentIndex].classList.remove('active');
+      
+      currentIndex = index;
+      
+      slides[currentIndex].classList.add('active');
+      tocItems[currentIndex].classList.add('active');
+      counter.textContent = `${currentIndex + 1} / ${slides.length}`;
+
+      btnPrev.disabled = currentIndex === 0;
+      btnNext.disabled = currentIndex === slides.length - 1;
+      
+      // Auto-scroll toc item into view if needed
+      tocItems[currentIndex].scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+      // Scroll stage to top
+      document.getElementById('stage').scrollTop = 0;
+    }
+
+    btnPrev.addEventListener('click', () => showSlide(currentIndex - 1));
+    btnNext.addEventListener('click', () => showSlide(currentIndex + 1));
+
+    tocItems.forEach(item => {
+      item.addEventListener('click', () => {
+        const idx = parseInt(item.getAttribute('data-index'), 10);
+        showSlide(idx);
+      });
+    });
+
+    btnToc.addEventListener('click', () => {
+      toc.classList.toggle('collapsed');
+    });
+
+    btnTheme.addEventListener('click', () => {
+      const current = document.documentElement.getAttribute('data-theme');
+      const next = current === 'dark' ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', next);
+      localStorage.setItem('arch_deck_theme', next);
+    });
+
+    // Restore theme
+    const savedTheme = localStorage.getItem('arch_deck_theme') || 'light';
+    document.documentElement.setAttribute('data-theme', savedTheme);
+
+    // Keyboard shortcuts
+    window.addEventListener('keydown', (e) => {
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+      if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') {
+        e.preventDefault();
+        showSlide(currentIndex + 1);
+      } else if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
+        e.preventDefault();
+        showSlide(currentIndex - 1);
+      } else if (e.key === 'm' || e.key === 'M') {
+        toc.classList.toggle('collapsed');
+      }
+    });
+
+    showSlide(0);
+  </script>
+</body>
+</html>
+

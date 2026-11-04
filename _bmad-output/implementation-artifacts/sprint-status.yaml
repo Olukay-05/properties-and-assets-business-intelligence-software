@@ -1,0 +1,77 @@
+generated: 11-03-2026 13:22
+last_updated: 11-03-2026 13:22
+project: business-intelligence
+project_key: business-intelligence
+tracking_system: file-system
+story_location: "_bmad-output/implementation-artifacts"
+
+development_status:
+  epic-1: backlog
+  1-1-greenfield-scaffold-laravel-react-starter-kit-with-typed-contract-tooling: backlog
+  1-2-tenant-context-and-rls-isolation-infrastructure: backlog
+  1-3-authentication-with-sanctum-and-membership-resolution: backlog
+  1-4-role-ability-policy-foundation: backlog
+  1-5-design-tokens-in-tailwind-theme-and-base-typography: backlog
+  1-6-core-component-library-i-layout-and-content-primitives: backlog
+  1-7-core-component-library-ii-interactive-and-field-primitives: backlog
+  1-8-application-shell-desktop-header-mobile-navigation-quick-task-bar: backlog
+  1-9-operational-states-and-editorial-copy-system: backlog
+  1-10-evidence-service-and-signed-url-gateway: backlog
+  1-11-audit-service-and-structured-error-envelope: backlog
+  epic-1-retrospective: optional
+
+  epic-2: backlog
+  2-1-client-account-service-migration-and-rest-endpoints: backlog
+  2-2-clientaccountsindex-screen: backlog
+  2-3-property-and-location-service-with-canonical-geometry: backlog
+  2-4-propertiesindex-screen-map-and-table-split-view: backlog
+  2-5-propertydetail-screen-dossier-with-map-postcode-badge-and-location-history-uj-1-hero: backlog
+  2-6-zones-and-assets-services-with-uniqueness-constraints: backlog
+  2-7-custody-service-with-append-only-handover: backlog
+  2-8-assetsindex-screen-and-custody-handover-modal: backlog
+  2-9-assetdetail-screen-specification-sheet-and-dynamic-timeline: backlog
+  2-10-property-asset-timeline-read-model-and-history-endpoint: backlog
+  epic-2-retrospective: optional
+
+  epic-3: backlog
+  3-1-inspection-template-service-with-row-versioning: backlog
+  3-2-templatesindex-screen: backlog
+  3-3-inspection-scheduling-and-lifecycle-service: backlog
+  3-4-inspectionsindex-screen: backlog
+  3-5-inspection-response-capture-service-with-immutability: backlog
+  3-6-inspectionrunner-screen-checklist-execution-with-evidence-and-sign-off-uj-2-hero: backlog
+  3-7-maintenance-request-service: backlog
+  3-8-requestsindex-screen-triage-and-convert: backlog
+  3-9-work-order-service-and-state-machine: backlog
+  3-10-workordersindex-screen: backlog
+  3-11-workorderdetail-screen-progress-logging-and-evidence-gated-completion-uj-3-hero: backlog
+  3-12-workflow-evidence-integration-with-post-completion-immutability: backlog
+  epic-3-retrospective: optional
+
+  epic-4: backlog
+  4-1-report-read-model-canonical-reportdata-aggregation-service: backlog
+  4-2-reportcompiler-screen-period-selection-and-editorial-preview-uj-4-hero: backlog
+  4-3-async-export-pipeline-pdf-and-csv-renderers-with-signed-urls: backlog
+  4-4-reportcompiler-export-ux-async-banner-and-recent-exports: backlog
+  4-5-pdf-report-template-editorial-print-layout-with-evidence-images: backlog
+  epic-4-retrospective: optional
+
+  epic-5: backlog
+  5-1-membership-administration-service-roles-client-scope-last-owner-guard: backlog
+  5-2-membershipsindex-screen: backlog
+  5-3-audit-query-service: backlog
+  5-4-auditeventsindex-screen: backlog
+  5-5-ndpa-data-protection-service: backlog
+  5-6-audit-ndpa-panel-dsr-and-breach-logging-workflows: backlog
+  epic-5-retrospective: optional
+
+  epic-6: backlog
+  6-1-tenant-isolation-test-matrix-as-a-ci-gate: backlog
+  6-2-security-hardening-pass: backlog
+  6-3-backups-restore-drill-and-retention-configuration: backlog
+  6-4-observability-setup: backlog
+  6-5-accessibility-audit-across-all-surfaces: backlog
+  6-6-pilot-readiness-checklist: backlog
+  epic-6-retrospective: optional
+
+action_items: []

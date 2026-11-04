@@ -1,0 +1,727 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Key screen UJ-3: Mobile work order execution and mandatory photo completion</title>
+  <style>
+    /* ==========================================================================
+       GOVERNED BY UX SPINE & ENTERPRISE-UI-UX SKILL:
+       - docs/design/design-context.md
+       - DESIGN.md & EXPERIENCE.md
+       - specs/screen-spec-uj3-mobile-work-order-execution.md
+       ========================================================================== */
+
+    :root {
+      --cc-white: #FFFFFF;
+      --cc-navy: #14243A;
+      --cc-navy-2: #17365D;
+      --cc-blue: #4F81BD;
+      --cc-blue-dark: #365F91;
+      --cc-teal: #126E6A;
+      --cc-teal-hover: #0E5855;
+      --cc-teal-wash: #EAF3F4;
+      --cc-row: #F4F7FA;
+      --cc-line: #263244;
+      --cc-border: #C7D1DC;
+      --cc-border-control: #6E7E91; /* 3.95:1 on #FFFFFF (WCAG 2.2 AA SC 1.4.11) */
+      --cc-border-hover: #526071;
+      --cc-muted: #5F6F82;
+      --cc-subtle: #7B8794;
+      --cc-page: #FFFFFF;
+      --cc-surface: #FFFFFF;
+      --cc-shell-backdrop: #F2F4F6;
+
+      --cc-success: #126E6A;
+      --cc-success-bg: #EAF3F1;
+      --cc-warning: #94651D;
+      --cc-warning-bg: #F7F1E6;
+      --cc-danger: #A34545;
+      --cc-danger-bg: #F8EEEE;
+      --cc-info: #4F81BD;
+      --cc-info-bg: #EEF3F9;
+
+      --cc-font-display: Arial, Helvetica, sans-serif;
+      --cc-font-body: Georgia, 'Times New Roman', serif;
+      --cc-font-ui: Arial, Helvetica, sans-serif;
+      --cc-text-xs: 0.75rem;
+      --cc-text-sm: 0.875rem;
+      --cc-text-base: 1rem;
+      --cc-text-lg: 1.125rem;
+
+      --cc-radius: 3px;
+      --cc-radius-sm: 2px;
+      --cc-control-height: 40px;
+      --cc-focus: 0 0 0 3px rgba(79, 129, 189, 0.22);
+    }
+
+    html {
+      scroll-padding-top: 80px;
+      scroll-padding-bottom: 72px;
+    }
+
+    body {
+      margin: 0;
+      background: var(--cc-shell-backdrop);
+      color: var(--cc-navy);
+      font-family: var(--cc-font-body);
+      padding: 20px;
+    }
+
+    .cc-theme *, .cc-theme *::before, .cc-theme *::after { box-sizing: border-box; }
+    .cc-theme :where(a, button, input, select, textarea, [tabindex]:not([tabindex="-1"])):focus-visible {
+      outline: 2px solid var(--cc-blue-dark);
+      outline-offset: 2px;
+      box-shadow: var(--cc-focus);
+    }
+
+    .cc-skip-link {
+      position: absolute;
+      top: -9999px;
+      left: 16px;
+      z-index: 200;
+      min-height: var(--cc-control-height);
+      padding: 8px 16px;
+      background: var(--cc-navy-2);
+      color: var(--cc-white);
+      font: 700 var(--cc-text-sm)/1.2 var(--cc-font-ui);
+      text-decoration: none;
+      border-radius: var(--cc-radius-sm);
+    }
+    .cc-skip-link:focus,
+    .cc-skip-link:focus-visible {
+      top: 12px;
+    }
+
+    .cc-tabular { font-variant-numeric: tabular-nums; }
+    .cc-kicker { color: var(--cc-teal); font: 700 12px/1.25 var(--cc-font-body); letter-spacing: .045em; text-transform: uppercase; }
+    .cc-subtitle { color: var(--cc-blue-dark); font: italic 400 18px/1.35 var(--cc-font-display); }
+    .cc-meta { color: var(--cc-muted); font: 400 13px/1.35 var(--cc-font-body); font-variant-numeric: tabular-nums; }
+    .cc-rule { height: 1px; width: 100%; background: var(--cc-blue); border: 0; margin: 8px 0; }
+
+    /* Interactive UX State Switcher Bar */
+    .ux-state-switcher {
+      max-width: 860px;
+      margin: 0 auto 16px;
+      background: var(--cc-navy);
+      color: var(--cc-white);
+      border: 1px solid var(--cc-line);
+      padding: 12px 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+      font-family: var(--cc-font-ui);
+    }
+    .ux-state-switcher__label {
+      font: 700 12px/1.2 var(--cc-font-ui);
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: #DCE5EE;
+    }
+    .ux-state-group {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    .ux-state-btn {
+      min-height: 36px;
+      padding: 0 10px;
+      border: 1px solid #6E7E91;
+      border-radius: 2px;
+      background: rgba(255, 255, 255, 0.08);
+      color: var(--cc-white);
+      font: 700 12px/1 var(--cc-font-ui);
+      cursor: pointer;
+    }
+    .ux-state-btn[aria-pressed="true"] {
+      background: var(--cc-teal);
+      border-color: var(--cc-white);
+    }
+
+    .comparison-header {
+      max-width: 860px;
+      margin: 0 auto 20px;
+      background: var(--cc-white);
+      border: 1px solid var(--cc-line);
+      border-top: 3px solid var(--cc-blue);
+      padding: 16px 20px;
+    }
+    .comparison-grid {
+      max-width: 860px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 390px 390px;
+      justify-content: space-between;
+      gap: 32px;
+      align-items: start;
+    }
+
+    /* Realistic <=390px Mobile Phone Frame */
+    .phone-frame {
+      width: 390px;
+      background: var(--cc-white);
+      border: 2px solid var(--cc-line);
+      border-radius: 3px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+    .phone-status-bar {
+      background: var(--cc-navy);
+      color: var(--cc-white);
+      padding: 6px 14px;
+      font: 700 12px/1.2 var(--cc-font-ui);
+      font-variant-numeric: tabular-nums;
+      display: flex;
+      justify-content: space-between;
+    }
+    .mobile-top-bar {
+      background: var(--cc-white);
+      border-top: 2px solid var(--cc-blue);
+      border-bottom: 1px solid var(--cc-line);
+      padding: 8px 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+    .mobile-page {
+      padding: 24px 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    /* Status badges */
+    .cc-status { display: inline-flex; align-items: center; gap: 5px; padding: 4px 8px; border-radius: 2px; font: 700 12px/1.2 var(--cc-font-ui); font-variant-numeric: tabular-nums; border: 1px solid transparent; }
+    .cc-status--success { color: #126E6A; background: var(--cc-success-bg); border-color: #C8E0DC; }
+    .cc-status--warning { color: #795014; background: var(--cc-warning-bg); border-color: #E8D9BA; }
+    .cc-status--danger { color: #853838; background: var(--cc-danger-bg); border-color: #EBCFCF; }
+    .cc-status--info { color: var(--cc-blue-dark); background: var(--cc-info-bg); border-color: #D4E0EF; }
+    .cc-status--neutral { color: var(--cc-muted); background: #F1F3F5; border-color: #DCE1E6; }
+
+    /* Buttons (40px min touch target) */
+    .cc-button { min-height: 40px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 0 14px; border: 1px solid transparent; border-radius: 2px; font: 700 14px/1 var(--cc-font-ui); cursor: pointer; text-decoration: none; }
+    .cc-button--primary { background: var(--cc-navy-2); border-color: var(--cc-navy-2); color: var(--cc-white); }
+    .cc-button--secondary { background: var(--cc-white); border-color: var(--cc-navy-2); color: var(--cc-navy-2); }
+    .cc-button--teal { background: var(--cc-teal); border-color: var(--cc-teal); color: var(--cc-white); }
+    .cc-button--teal:hover { background: var(--cc-teal-hover); border-color: var(--cc-teal-hover); }
+    .cc-button--danger { background: var(--cc-danger); border-color: var(--cc-danger); color: var(--cc-white); }
+    .cc-button--small { min-height: 36px; padding-inline: 12px; font-size: 12px; }
+    .cc-button[aria-disabled="true"] { opacity: 0.55; cursor: not-allowed; }
+
+    /* Cards & Form Controls (16px on mobile to prevent iOS Safari viewport auto-zoom; 3.95:1 border contrast) */
+    .cc-card { background: var(--cc-surface); border: 1px solid var(--cc-border); border-radius: 2px; padding: 14px; display: flex; flex-direction: column; gap: 8px; }
+    .cc-card--emphasis { border-top: 3px solid var(--cc-blue); }
+    .cc-field { display: grid; gap: 5px; font-family: var(--cc-font-ui); }
+    .cc-label { color: var(--cc-navy-2); font: 700 14px/1.3 var(--cc-font-ui); }
+    .cc-input, .cc-select, .cc-textarea {
+      width: 100%;
+      min-height: 40px;
+      border: 1px solid var(--cc-border-control);
+      border-radius: 2px;
+      background: var(--cc-white);
+      color: var(--cc-navy);
+      padding: 8px 10px;
+      font: 400 16px/1.35 var(--cc-font-ui);
+    }
+    .cc-textarea { min-height: 68px; }
+
+    /* 16. evidence-uploader */
+    .cc-evidence-uploader {
+      background: var(--cc-row);
+      border: 1px dashed var(--cc-border-control);
+      border-radius: 2px;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .progress-track { height: 4px; width: 100%; background: #DCE1E6; overflow: hidden; }
+    .progress-fill { height: 100%; width: 100%; background: var(--cc-teal); }
+
+    /* State banners */
+    .cc-state-banner {
+      padding: 12px 14px;
+      border-radius: 2px;
+      display: grid;
+      gap: 6px;
+      font: 400 13px/1.4 var(--cc-font-body);
+    }
+    .cc-state-banner--danger { background: var(--cc-danger-bg); border: 1px solid #EBCFCF; color: #853838; }
+    .cc-state-banner--warning { background: var(--cc-warning-bg); border: 1px solid #E8D9BA; color: #795014; }
+    .cc-state-banner--neutral { background: #F1F3F5; border: 1px solid #DCE1E6; color: var(--cc-navy); }
+    .cc-state-banner--success { background: var(--cc-teal-wash); border: 1px solid #C8E0DC; color: var(--cc-navy); }
+
+    /* Skeleton loading blocks */
+    .cc-skeleton-block {
+      background: #E4EAF0;
+      border: 1px solid var(--cc-border);
+      border-radius: 2px;
+      height: 56px;
+    }
+
+    /* 19. timeline-feed */
+    .cc-timeline {
+      border-left: 1px solid var(--cc-border);
+      margin-left: 6px;
+      padding-left: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .timeline-node {
+      position: relative;
+      border: 1px solid var(--cc-border);
+      border-radius: 2px;
+      padding: 10px 12px;
+      background: var(--cc-white);
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .timeline-node::before {
+      content: "";
+      position: absolute;
+      left: -20px;
+      top: 12px;
+      width: 10px;
+      height: 10px;
+      background: var(--cc-blue);
+    }
+    .timeline-node--completed::before {
+      background: var(--cc-teal);
+    }
+
+    /* 2. mobile-quick-task-bar (12px typography floor per DESIGN.md) */
+    .mobile-quick-task-bar {
+      height: 56px;
+      background: var(--cc-white);
+      border-top: 1px solid var(--cc-line);
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+    }
+    .quick-task-cell {
+      min-height: 40px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font: 700 var(--cc-text-xs)/1.15 var(--cc-font-ui);
+      color: var(--cc-navy-2);
+      text-decoration: none;
+      border-top: 2px solid transparent;
+      text-align: center;
+      padding: 4px;
+    }
+    .quick-task-cell.is-active {
+      background: var(--cc-info-bg);
+      color: var(--cc-blue-dark);
+      border-top-color: var(--cc-blue);
+    }
+
+    @media (max-width: 860px) {
+      .comparison-grid {
+        grid-template-columns: 1fr;
+        justify-items: center;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+      }
+    }
+  </style>
+</head>
+<body class="cc-theme">
+
+  <a href="#main-content" class="cc-skip-link">Skip to main content</a>
+
+  <!-- Interactive UX State Switcher -->
+  <aside class="ux-state-switcher" aria-label="Interactive UX state switcher">
+    <span class="ux-state-switcher__label">Interactive UX state matrix (`UJ-3`):</span>
+    <div class="ux-state-group" role="group" aria-label="Select screen state">
+      <button type="button" class="ux-state-btn" data-state="default" aria-pressed="true">1. Default (On hold + Completion split)</button>
+      <button type="button" class="ux-state-btn" data-state="loading" aria-pressed="false">2. Loading (Skeleton)</button>
+      <button type="button" class="ux-state-btn" data-state="error" aria-pressed="false">3. Error (Missing completion photo gate)</button>
+      <button type="button" class="ux-state-btn" data-state="offline" aria-pressed="false">4. Offline (Upload retry)</button>
+      <button type="button" class="ux-state-btn" data-state="permission" aria-pressed="false">5. Permission (403 wrong assignee)</button>
+      <button type="button" class="ux-state-btn" data-state="completed" aria-pressed="false">6. Completed (Locked + Asset updated)</button>
+    </div>
+  </aside>
+
+  <header class="comparison-header">
+    <div class="cc-kicker">Key screen UJ-3 · Protagonist: Tunde Adeyemi (Technician · Mobile field browser &lt;=390px)</div>
+    <h1 style="font: 700 22px/1.2 var(--cc-font-display); color: var(--cc-navy-2); margin: 4px 0;">Mobile work order execution (`Maintenance/WorkOrderDetail.tsx`)</h1>
+    <p class="cc-meta" style="color: var(--cc-navy);">
+      <strong>Left column:</strong> Multi-visit <em>In progress / On hold</em> logging without false closure, plus non-blocking <em>GPS unavailable: recorded without coordinates</em> live-region notice inside the concrete generator room.
+      <strong>Right column:</strong> Climax completion state with mandatory completion photo attached (`Africa/Lagos` WAT timestamp) and Teal confirm button (<em>Mark complete</em>).
+    </p>
+  </header>
+
+  <main id="main-content" class="comparison-grid" tabindex="-1">
+
+    <!-- ======================================================================
+         LEFT COLUMN: MULTI-VISIT IN PROGRESS / PROGRESS LOG & GPS UNAVAILABLE
+         ====================================================================== -->
+    <section class="phone-frame" aria-label="Multi-visit in progress work order">
+      <div class="phone-status-bar">
+        <span>11:48 WAT · Airtel 3G</span>
+        <span>Android field browser · 390px</span>
+      </div>
+
+      <header class="mobile-top-bar">
+        <div>
+          <div style="font: 700 var(--cc-text-xs)/1.1 var(--cc-font-ui); color: var(--cc-muted); text-transform: uppercase;">Assigned technician</div>
+          <div style="font: 700 13px/1.2 var(--cc-font-ui); color: var(--cc-navy-2);">Tunde Adeyemi · Lagoon View Estates</div>
+        </div>
+        <button type="button" class="cc-button cc-button--secondary" style="min-height: 40px; padding: 0 12px;">Menu</button>
+      </header>
+
+      <!-- LOADING SKELETON -->
+      <div id="wo-loading-left" class="mobile-page" hidden aria-busy="true" aria-label="Loading work order detail">
+        <div class="cc-kicker">Loading work order WO-2026-0142...</div>
+        <div class="cc-skeleton-block" style="height: 76px;"></div>
+        <div class="cc-skeleton-block" style="height: 110px;"></div>
+        <div class="cc-skeleton-block" style="height: 220px;"></div>
+      </div>
+
+      <div id="wo-active-left" class="mobile-page">
+
+        <!-- Permission 403 Banner -->
+        <div id="wo-banner-permission" class="cc-state-banner cc-state-banner--neutral" role="status" hidden>
+          <div style="font-weight: 700; font-family: var(--cc-font-ui);">Assigned to another technician (HTTP 403)</div>
+          <div>This work order is assigned to <strong>Tunde Adeyemi</strong>. Only the assigned technician or a Site Supervisor / Operations Manager can transition status (`FR-14`).</div>
+        </div>
+
+        <!-- 3. page-header -->
+        <div>
+          <div class="cc-kicker">Work order WO-2026-0142 · Origin: INSP-2026-089</div>
+          <h2 style="font: 700 20px/1.2 var(--cc-font-display); color: var(--cc-navy-2); margin: 4px 0;">Replace frayed alternator drive belt on 500kVA Generator LVE-GEN-01</h2>
+          <hr class="cc-rule" />
+          <div style="display: flex; flex-wrap: wrap; gap: 6px; align-items: center;">
+            <span id="left-status-chip" class="cc-status cc-status--info cc-tabular">In progress (Visit 1 of 2)</span>
+            <span class="cc-status cc-status--danger">Priority: High</span>
+          </div>
+        </div>
+
+        <!-- Target Property, Zone & Asset Context Card -->
+        <div class="cc-card cc-card--emphasis">
+          <div style="font: 700 12px/1.2 var(--cc-font-body); color: var(--cc-teal); text-transform: uppercase; letter-spacing: 0.04em;">Target facility and asset</div>
+          <div style="font: 700 14px/1.3 var(--cc-font-body); color: var(--cc-navy);">
+            14 Adeola Odeku St (`LVE-VI-01`) · Generator House<br/>
+            Asset: <code>LVE-GEN-01</code> (500kVA Mikano Standby Generator)
+          </div>
+          <div class="cc-meta" style="font-size: 12px;">
+            Accountable custodian: Amara Bello · Assigned technician: Tunde Adeyemi
+          </div>
+        </div>
+
+        <!-- Multi-Visit Progress / On Hold Form (FR-14, AD-11) -->
+        <div class="cc-card">
+          <div class="cc-kicker">Honest multi-visit progress log · FR-14</div>
+          <div style="font: 700 15px/1.25 var(--cc-font-display); color: var(--cc-navy-2);">Record partial progress or place on hold</div>
+          <p class="cc-meta" style="font-size: 12px; color: var(--cc-navy); margin: 0;">
+            Use this form when a repair spans multiple visits or awaits parts. No completion photo is required to log partial progress.
+          </p>
+
+          <div class="cc-field">
+            <label class="cc-label" for="wo-status-select">Next operational status (Tier-1 native select)</label>
+            <select id="wo-status-select" class="cc-select">
+              <option value="in_progress">In progress: Active on site</option>
+              <option value="on_hold" selected>On hold: Awaiting replacement part</option>
+            </select>
+          </div>
+
+          <div class="cc-field">
+            <label class="cc-label" for="wo-performed">Work performed this visit</label>
+            <textarea id="wo-performed" class="cc-textarea">Isolated generator battery, removed belt guard and frayed alternator v-belt, inspected pulley assembly.</textarea>
+          </div>
+
+          <div class="cc-field">
+            <label class="cc-label" for="wo-outstanding">Outstanding work remaining</label>
+            <input id="wo-outstanding" class="cc-input" type="text" value="Fit new OEM tensioner pulley bearing and matched v-belt; run load test." />
+          </div>
+
+          <div class="cc-field" id="delay-field-wrap">
+            <label class="cc-label" for="wo-delay">Reason for delay or hold</label>
+            <input id="wo-delay" class="cc-input" type="text" value="Tensioner pulley bearing seized; fetching OEM part from Ikeja mainland depot." />
+          </div>
+
+          <!-- State 9: Non-blocking GPS Unavailable notice inside concrete plant room -->
+          <div role="status" aria-live="polite" style="background: #F1F3F5; border: 1px solid #DCE1E6; padding: 10px; border-radius: 2px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+              <span class="cc-status cc-status--neutral">GPS unavailable: recorded without coordinates</span>
+            </div>
+            <div class="cc-meta" style="font-size: 12px; color: var(--cc-navy);">
+              GPS coordinates unavailable inside enclosed Generator House. Progress log and <code>Africa/Lagos</code> timestamp are recorded without blocking your update (FR-15, FR-21).
+            </div>
+          </div>
+
+          <button type="button" id="btn-save-progress" class="cc-button cc-button--secondary" style="width: 100%;">Save progress and place on hold</button>
+        </div>
+
+        <!-- 19. timeline-feed -->
+        <div>
+          <div class="cc-kicker" style="margin-bottom: 8px;">Work order event history (`work_order_events`)</div>
+          <div class="cc-timeline">
+            <div class="timeline-node">
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span class="cc-status cc-status--info">Assigned to In progress</span>
+                <span class="cc-meta" style="font-size: 12px;">03 Nov 2026, 11:20 WAT</span>
+              </div>
+              <div class="cc-meta" style="color: var(--cc-navy); font-size: 12px;">
+                <strong>Tunde Adeyemi</strong> started on-site diagnostics at Generator House.
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 2. mobile-quick-task-bar -->
+      <nav class="mobile-quick-task-bar" aria-label="Field quick task bar">
+        <a href="#my-inspections" class="quick-task-cell">My Inspections</a>
+        <a href="#my-work-orders" class="quick-task-cell is-active">My Work Orders</a>
+        <a href="#asset-lookup" class="quick-task-cell">Asset Lookup</a>
+        <a href="#quick-evidence" class="quick-task-cell">Quick Evidence</a>
+      </nav>
+    </section>
+
+    <!-- ======================================================================
+         RIGHT COLUMN: CLIMAX COMPLETION STATE WITH MANDATORY PHOTO EVIDENCE
+         ====================================================================== -->
+    <section class="phone-frame" aria-label="Climax completion state with mandatory photo evidence">
+      <div class="phone-status-bar">
+        <span>16:45 WAT · MTN 4G</span>
+        <span>Visit 2 · Ready to complete</span>
+      </div>
+
+      <header class="mobile-top-bar">
+        <div>
+          <div style="font: 700 var(--cc-text-xs)/1.1 var(--cc-font-ui); color: var(--cc-muted); text-transform: uppercase;">Assigned technician</div>
+          <div style="font: 700 13px/1.2 var(--cc-font-ui); color: var(--cc-navy-2);">Tunde Adeyemi · Lagoon View Estates</div>
+        </div>
+        <button type="button" class="cc-button cc-button--secondary" style="min-height: 40px; padding: 0 12px;">Menu</button>
+      </header>
+
+      <div class="mobile-page">
+
+        <!-- State 3: Error (Missing Completion Photo Gate) -->
+        <div id="wo-banner-error-photo" class="cc-state-banner cc-state-banner--danger" role="alert" hidden>
+          <div style="font-weight: 700; font-family: var(--cc-font-ui);">Completion photo required (`FR-15`, `AD-11`)</div>
+          <div>Attach at least one completion photo showing the finished work before marking this work order complete.</div>
+        </div>
+
+        <!-- State 4: Offline / Upload Retry Banner -->
+        <div id="wo-banner-offline" class="cc-state-banner cc-state-banner--warning" role="status" aria-live="polite" hidden>
+          <div style="font-weight: 700; font-family: var(--cc-font-ui);">Upload interrupted (`new-oem-belt-installed-lve-gen-01.webp`)</div>
+          <div>Compressed WebP (294 KB) and resolution notes remain in memory. Tap <strong>Retry upload</strong> when 3G/4G signal returns.</div>
+        </div>
+
+        <!-- State 6: Completed & Locked Banner -->
+        <div id="wo-banner-completed" class="cc-state-banner cc-state-banner--success" role="status" aria-live="polite" hidden>
+          <div style="font-weight: 700; font-family: var(--cc-font-ui);">Work order completed and locked (`FR-16`)</div>
+          <div>Completed on <strong>03 Nov 2026, 16:45 WAT</strong> by <strong>Tunde Adeyemi</strong>. Appended to asset <code>LVE-GEN-01</code> maintenance history; evidence deletion disabled.</div>
+        </div>
+
+        <!-- 3. page-header -->
+        <div>
+          <div class="cc-kicker">Work order WO-2026-0142 · Final completion gate</div>
+          <h2 style="font: 700 20px/1.2 var(--cc-font-display); color: var(--cc-navy-2); margin: 4px 0;">Replace frayed alternator drive belt on 500kVA Generator LVE-GEN-01</h2>
+          <hr class="cc-rule" />
+          <div style="display: flex; flex-wrap: wrap; gap: 6px; align-items: center;">
+            <span id="right-photo-badge" class="cc-status cc-status--success">Completion photo attached</span>
+            <span class="cc-meta">03 Nov 2026, 16:45 WAT</span>
+          </div>
+        </div>
+
+        <!-- Completion Resolution & Mandatory Photo Uploader (FR-15, AD-11) -->
+        <div class="cc-card cc-card--emphasis">
+          <div class="cc-kicker">Evidence-gated completion · FR-15 and AD-11</div>
+          <div style="font: 700 15px/1.25 var(--cc-font-display); color: var(--cc-navy-2);">Final resolution and mandatory photo proof</div>
+
+          <div class="cc-field">
+            <label class="cc-label" for="wo-final-work">Final work performed</label>
+            <textarea id="wo-final-work" class="cc-textarea">Installed new Perkins OEM tensioner pulley assembly and matched alternator drive belt. Tension verified at 12mm deflection; ran 15-minute load test at 415V AC with zero slip.</textarea>
+          </div>
+
+          <div class="cc-field">
+            <label class="cc-label" for="wo-asset-restore">Updated asset condition (`LVE-GEN-01`)</label>
+            <select id="wo-asset-restore" class="cc-select">
+              <option value="good" selected>Good: Restored to full operational specification</option>
+              <option value="fair">Fair: Needs attention</option>
+            </select>
+          </div>
+
+          <!-- 16. evidence-uploader with attached completion photo & WAT timestamp -->
+          <div class="cc-evidence-uploader" aria-live="polite">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <span id="photo-req-label" style="font: 700 12px/1.2 var(--cc-font-ui); color: var(--cc-navy-2);">Mandatory completion photo (1/1 required)</span>
+              <span id="photo-status-pill" class="cc-status cc-status--success cc-tabular">Verified · 294 KB WebP</span>
+            </div>
+            <div class="progress-track" role="progressbar" aria-label="Evidence upload progress" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100">
+              <div id="photo-progress-fill" class="progress-fill"></div>
+            </div>
+
+            <!-- 17. evidence-gallery preview card -->
+            <div id="photo-preview-card" style="border: 1px solid var(--cc-border); background: var(--cc-white); padding: 10px; border-radius: 2px; display: flex; flex-direction: column; gap: 6px;">
+              <div style="height: 92px; background: #DCE5EE; border: 1px solid var(--cc-border); display: flex; align-items: center; justify-content: center; font: 700 12px/1.2 var(--cc-font-ui); color: var(--cc-navy-2);">
+                [Signed R2 thumbnail · new-oem-belt-installed-lve-gen-01.webp]
+              </div>
+              <div class="cc-meta" style="font-size: 12px; color: var(--cc-navy);">
+                <strong>Captured at:</strong> 03 Nov 2026, 16:45 WAT (Africa/Lagos)<br/>
+                <strong>Uploader:</strong> Tunde Adeyemi · <strong>GPS:</strong> <code>location: null</code> (Recorded without coordinates)
+              </div>
+            </div>
+
+            <button type="button" id="btn-toggle-photo" class="cc-button cc-button--secondary" style="width: 100%;">Remove or replace photo (test completion gate)</button>
+          </div>
+
+          <!-- Single Primary Teal Confirm Button (Mark complete) -->
+          <button type="button" id="btn-mark-complete" class="cc-button cc-button--teal" style="width: 100%;">
+            Mark complete (Complete work order)
+          </button>
+          <span class="cc-meta" style="font-size: 12px; text-align: center;">
+            Completing locks this work order, prevents photo deletion, and appends to <code>LVE-GEN-01</code> asset history (FR-16).
+          </span>
+        </div>
+
+        <!-- 19. timeline-feed showing full multi-visit trail -->
+        <div>
+          <div class="cc-kicker" style="margin-bottom: 8px;">Multi-visit trail (`work_order_events`)</div>
+          <div class="cc-timeline">
+            <div class="timeline-node timeline-node--completed">
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span class="cc-status cc-status--info">On hold to In progress</span>
+                <span class="cc-meta" style="font-size: 12px;">03 Nov 2026, 15:50 WAT</span>
+              </div>
+              <div class="cc-meta" style="color: var(--cc-navy); font-size: 12px;">
+                <strong>Tunde Adeyemi</strong> returned from Ikeja depot with OEM pulley and belt.
+              </div>
+            </div>
+            <div class="timeline-node">
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span class="cc-status cc-status--warning">In progress to On hold</span>
+                <span class="cc-meta" style="font-size: 12px;">03 Nov 2026, 11:48 WAT</span>
+              </div>
+              <div class="cc-meta" style="color: var(--cc-navy); font-size: 12px;">
+                <strong>Delay reason:</strong> Awaiting OEM tensioner pulley from Ikeja depot.
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 2. mobile-quick-task-bar -->
+      <nav class="mobile-quick-task-bar" aria-label="Field quick task bar">
+        <a href="#my-inspections" class="quick-task-cell">My Inspections</a>
+        <a href="#my-work-orders" class="quick-task-cell is-active">My Work Orders</a>
+        <a href="#asset-lookup" class="quick-task-cell">Asset Lookup</a>
+        <a href="#quick-evidence" class="quick-task-cell">Quick Evidence</a>
+      </nav>
+    </section>
+
+  </main>
+
+  <script>
+    (function () {
+      const stateBtns = document.querySelectorAll('.ux-state-btn');
+      const loadingLeft = document.getElementById('wo-loading-left');
+      const activeLeft = document.getElementById('wo-active-left');
+      const bannerPermission = document.getElementById('wo-banner-permission');
+      const bannerErrorPhoto = document.getElementById('wo-banner-error-photo');
+      const bannerOffline = document.getElementById('wo-banner-offline');
+      const bannerCompleted = document.getElementById('wo-banner-completed');
+
+      const rightPhotoBadge = document.getElementById('right-photo-badge');
+      const photoReqLabel = document.getElementById('photo-req-label');
+      const photoStatusPill = document.getElementById('photo-status-pill');
+      const photoPreviewCard = document.getElementById('photo-preview-card');
+      const btnTogglePhoto = document.getElementById('btn-toggle-photo');
+      const btnMarkComplete = document.getElementById('btn-mark-complete');
+      const btnSaveProgress = document.getElementById('btn-save-progress');
+
+      let hasPhoto = true;
+
+      function syncPhotoUI(attached) {
+        hasPhoto = attached;
+        if (attached) {
+          rightPhotoBadge.textContent = 'Completion photo attached';
+          rightPhotoBadge.className = 'cc-status cc-status--success';
+          photoReqLabel.textContent = 'Mandatory completion photo (1/1 required)';
+          photoStatusPill.textContent = 'Verified · 294 KB WebP';
+          photoStatusPill.className = 'cc-status cc-status--success cc-tabular';
+          photoPreviewCard.hidden = false;
+          btnTogglePhoto.textContent = 'Remove photo (test completion gate)';
+          btnMarkComplete.removeAttribute('aria-disabled');
+          bannerErrorPhoto.hidden = true;
+        } else {
+          rightPhotoBadge.textContent = 'Completion photo missing (0/1)';
+          rightPhotoBadge.className = 'cc-status cc-status--danger';
+          photoReqLabel.textContent = 'Mandatory completion photo (0/1 attached)';
+          photoStatusPill.textContent = 'Required before completion';
+          photoStatusPill.className = 'cc-status cc-status--danger cc-tabular';
+          photoPreviewCard.hidden = true;
+          btnTogglePhoto.textContent = 'Attach completion photo (294 KB WebP)';
+          btnMarkComplete.setAttribute('aria-disabled', 'true');
+          bannerErrorPhoto.hidden = false;
+        }
+      }
+
+      btnTogglePhoto.addEventListener('click', function () {
+        syncPhotoUI(!hasPhoto);
+      });
+
+      btnMarkComplete.addEventListener('click', function () {
+        if (!hasPhoto || btnMarkComplete.getAttribute('aria-disabled') === 'true') {
+          bannerErrorPhoto.hidden = false;
+          return;
+        }
+        bannerCompleted.hidden = false;
+        btnMarkComplete.setAttribute('aria-disabled', 'true');
+        btnMarkComplete.textContent = 'Completed and locked (16:45 WAT)';
+        btnTogglePhoto.hidden = true;
+      });
+
+      stateBtns.forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          const state = btn.getAttribute('data-state');
+          stateBtns.forEach(function (b) { b.setAttribute('aria-pressed', String(b === btn)); });
+
+          loadingLeft.hidden = state !== 'loading';
+          activeLeft.hidden = state === 'loading';
+          bannerPermission.hidden = state !== 'permission';
+          bannerOffline.hidden = state !== 'offline';
+          bannerCompleted.hidden = state !== 'completed';
+          btnTogglePhoto.hidden = state === 'completed';
+
+          if (state === 'error') {
+            syncPhotoUI(false);
+          } else {
+            syncPhotoUI(true);
+          }
+
+          if (state === 'permission') {
+            btnSaveProgress.setAttribute('aria-disabled', 'true');
+            btnMarkComplete.setAttribute('aria-disabled', 'true');
+          } else if (state === 'completed') {
+            btnMarkComplete.setAttribute('aria-disabled', 'true');
+            btnMarkComplete.textContent = 'Completed and locked (16:45 WAT)';
+          } else if (state !== 'error') {
+            btnSaveProgress.removeAttribute('aria-disabled');
+            btnMarkComplete.removeAttribute('aria-disabled');
+            btnMarkComplete.textContent = 'Mark complete (Complete work order)';
+          }
+        });
+      });
+    })();
+  </script>
+</body>
+</html>

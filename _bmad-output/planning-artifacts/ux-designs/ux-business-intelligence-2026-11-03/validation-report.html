@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>UX Design Validation Report: Cloud Crafters Property and Asset Intelligence</title>
+<style>
+  :root {
+    --bg: #F2F4F6;
+    --surface: #FFFFFF;
+    --border: #C7D1DC;
+    --line: #263244;
+    --text: #14243A;
+    --navy-2: #17365D;
+    --blue: #4F81BD;
+    --blue-dark: #365F91;
+    --teal: #126E6A;
+    --teal-wash: #EAF3F4;
+    --muted: #5F6F82;
+    --verdict-strong: #126E6A;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: Georgia, "Times New Roman", serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.5;
+    font-size: 15px;
+  }
+  .container { max-width: 1040px; margin: 24px auto; padding: 40px 48px; background: var(--surface); border: 1px solid var(--line); border-top: 3px solid var(--blue); }
+  h1, h2, h3 { font-family: Arial, Helvetica, sans-serif; color: var(--navy-2); margin: 0; }
+  h1 { font-size: 26px; margin-bottom: 6px; }
+  h2 { font-size: 18px; color: var(--blue-dark); margin: 24px 0 10px; }
+  .kicker { font: 700 12px/1.2 Georgia, serif; color: var(--teal); text-transform: uppercase; letter-spacing: 0.05em; }
+  .subtitle { font-family: Arial, Helvetica, sans-serif; font-size: 13px; color: var(--muted); }
+  .callout { background: var(--teal-wash); padding: 16px 20px; margin: 20px 0; border-left: 3px solid var(--teal); }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 12px; margin: 16px 0 24px; }
+  .card { border: 1px solid var(--border); border-top: 3px solid var(--blue); padding: 14px 16px; background: var(--surface); }
+  .card-label { font: 700 11px/1.2 Georgia, serif; color: var(--teal); text-transform: uppercase; letter-spacing: 0.04em; }
+  .card-val { font: 700 20px/1.2 Arial, sans-serif; color: var(--navy-2); margin-top: 4px; font-variant-numeric: tabular-nums; }
+  table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 14px; font-variant-numeric: tabular-nums; }
+  th { background: var(--text); color: #FFFFFF; text-align: left; padding: 10px 12px; font-family: Arial, sans-serif; border: 1px solid var(--line); }
+  td { padding: 10px 12px; border: 1px solid var(--line); vertical-align: top; }
+  tr:nth-child(even) td { background: #F4F7FA; }
+  .pill { display: inline-block; padding: 3px 8px; background: #EAF3F1; color: #126E6A; border: 1px solid #C8E0DC; font: 700 11px/1.2 Arial, sans-serif; border-radius: 2px; text-transform: uppercase; }
+  a { color: var(--blue-dark); font-family: Arial, sans-serif; font-weight: 700; text-decoration: none; }
+  a:hover { text-decoration: underline; }
+</style>
+</head>
+<body>
+  <main class="container">
+    <div class="kicker">Cloud Crafters Editorial Intelligence · Enterprise-UI-UX + BMAD Validation Gate</div>
+    <h1>Cloud Crafters Property and Asset Intelligence: UX Validation Report</h1>
+    <div class="subtitle">Run workspace: <code>_bmad-output/planning-artifacts/ux-designs/ux-business-intelligence-2026-11-03/</code> · Updated: 2026-11-03</div>
+
+    <div class="callout">
+      <strong>Overall verdict: PASS (30 / 30 on <code>enterprise-ui-ux</code> Design Review Rubric; 8 / 8 strong on BMAD Spine Pair Rubric; 0 Blockers, 0 Majors).</strong><br/>
+      All 4 key-screen HTML prototypes now include an interactive top <strong>UX State Switcher</strong> (`Default`, `Loading Skeleton`, `Empty`, `Error 422/429/Domain Exception`, `Offline / Network Retry`, `Permission Denied / Immutable Locked`), WCAG 2.2 AA `3.95:1` non-text control borders (`--cc-border-control: #6E7E91`), `Skip to main content` bypass links, `scroll-padding` for sticky bars, keyboard/modal coordinate entry for map pin updates, `tabular-nums`, sentence-case copy, zero em/en dashes, and `@media (prefers-reduced-motion: reduce)`.
+    </div>
+
+    <div class="grid">
+      <div class="card">
+        <div class="card-label">Enterprise-UI-UX Score</div>
+        <div class="card-val">30 / 30 (100%)</div>
+      </div>
+      <div class="card">
+        <div class="card-label">BMAD Spine Dimensions</div>
+        <div class="card-val">8 / 8 Strong</div>
+      </div>
+      <div class="card">
+        <div class="card-label">WCAG 2.2 AA Audit</div>
+        <div class="card-val">0 Open Issues</div>
+      </div>
+      <div class="card">
+        <div class="card-label">Interactive Prototypes</div>
+        <div class="card-val">4 Mockups + 4 Specs</div>
+      </div>
+    </div>
+
+    <h2>1. Enterprise-UI-UX 10-Category Design Review Scorecard</h2>
+    <table>
+      <thead>
+        <tr>
+          <th style="width: 28%;">Category</th>
+          <th style="width: 12%;">Score</th>
+          <th>Verification Evidence</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>1. User Goal and Task Clarity</strong></td>
+          <td><span class="pill">3 / 3</span></td>
+          <td>Primary goal obvious in 3 seconds; strictly one primary CTA per view (<code>+ Register Asset</code>, <code>Approve and sign off inspection</code>, <code>Mark complete</code>, <code>Export PDF and CSV</code>).</td>
+        </tr>
+        <tr>
+          <td><strong>2. Visual Hierarchy and Layout</strong></td>
+          <td><span class="pill">3 / 3</span></td>
+          <td>Editorial 3-level hierarchy (`Arial` display, `Georgia` narrative, `Arial` UI), `4px`/`8px` spacing grid, and `font-variant-numeric: tabular-nums` on all numeric columns and timestamps.</td>
+        </tr>
+        <tr>
+          <td><strong>3. Interaction and States</strong></td>
+          <td><span class="pill">3 / 3</span></td>
+          <td>Interactive UX State Switcher in every HTML prototype toggling live between Default, Loading Skeleton, Empty, Error, Offline/Retry, and Permission/Locked states.</td>
+        </tr>
+        <tr>
+          <td><strong>4. Forms and Validation</strong></td>
+          <td><span class="pill">3 / 3</span></td>
+          <td>Explicit <code>&lt;label for="..."&gt;</code> above every field, <code>16px</code> mobile inputs (iOS zoom safety), <code>--cc-border-control: #6E7E91</code> (<code>3.95:1</code>), and specific recovery guidance.</td>
+        </tr>
+        <tr>
+          <td><strong>5. Accessibility (WCAG 2.2 AA)</strong></td>
+          <td><span class="pill">3 / 3</span></td>
+          <td>SC 1.4.3 text contrast <code>&gt;=4.5:1</code>, SC 1.4.11 control border contrast <code>3.95:1</code>, SC 2.4.1 <code>.cc-skip-link</code>, SC 2.4.11 <code>scroll-padding</code>, SC 2.5.7 coordinate modal for map pin drag, SC 2.5.8 <code>&gt;=40px</code> targets, SC 2.3.3 <code>prefers-reduced-motion</code>.</td>
+        </tr>
+        <tr>
+          <td><strong>6. Responsive and Adaptive</strong></td>
+          <td><span class="pill">3 / 3</span></td>
+          <td>Desktop (<code>&gt;760px</code>) editorial sheet and mobile field browser (<code>&lt;=390px</code> / <code>&lt;=760px</code>) with scroll-shadow gradients and sticky first column on wide tables.</td>
+        </tr>
+        <tr>
+          <td><strong>7. Design System and Token Discipline</strong></td>
+          <td><span class="pill">3 / 3</span></td>
+          <td>100% token resolution across <code>docs/design/design-context.md</code>, <code>DESIGN.md</code>, <code>EXPERIENCE.md</code>, and <code>cloud-crafters-design-system.css</code>.</td>
+        </tr>
+        <tr>
+          <td><strong>8. Copy and Content Quality</strong></td>
+          <td><span class="pill">3 / 3</span></td>
+          <td>Sentence case across UI headings/labels/buttons, plain punctuation with zero em/en dashes, and authentic Nigerian FM domain copy (`Lagoon View Estates Ltd`, `Africa/Lagos` WAT).</td>
+        </tr>
+        <tr>
+          <td><strong>9. Performance and Resilience</strong></td>
+          <td><span class="pill">3 / 3</span></td>
+          <td><code>0 KB</code> webfont payload, client-side WebP compression (<code>&lt;=1920px</code>), in-memory interrupted-upload retry, and non-blocking indoor GPS fallback.</td>
+        </tr>
+        <tr>
+          <td><strong>10. Trust, Privacy, and Honesty</strong></td>
+          <td><span class="pill">3 / 3</span></td>
+          <td>Confirmation modal before irreversible inspection sign-off (<code>AD-10</code>), honest multi-visit <code>On hold</code> logging (<code>FR-14</code>), and mandatory completion photo gate (<code>FR-15</code>).</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h2>2. Artifact Inventory</h2>
+    <ul>
+      <li><a href="../../../../docs/design/design-context.md">docs/design/design-context.md</a> (Project-wide `enterprise-ui-ux` design context)</li>
+      <li><a href="DESIGN.md">DESIGN.md</a> &amp; <a href="EXPERIENCE.md">EXPERIENCE.md</a> (Final UX Spine Pair)</li>
+      <li><a href="specs/screen-spec-uj1-property-asset-register.md">specs/screen-spec-uj1-property-asset-register.md</a> &amp; <a href="mockups/property-asset-register.html">mockups/property-asset-register.html</a></li>
+      <li><a href="specs/screen-spec-uj2-mobile-inspection-runner.md">specs/screen-spec-uj2-mobile-inspection-runner.md</a> &amp; <a href="mockups/mobile-inspection-runner.html">mockups/mobile-inspection-runner.html</a></li>
+      <li><a href="specs/screen-spec-uj3-mobile-work-order-execution.md">specs/screen-spec-uj3-mobile-work-order-execution.md</a> &amp; <a href="mockups/mobile-work-order-execution.html">mockups/mobile-work-order-execution.html</a></li>
+      <li><a href="specs/screen-spec-uj4-client-report-compiler.md">specs/screen-spec-uj4-client-report-compiler.md</a> &amp; <a href="mockups/client-report-compiler.html">mockups/client-report-compiler.html</a></li>
+    </ul>
+  </main>
+</body>
+</html>

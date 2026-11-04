@@ -1,0 +1,990 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Key screen UJ-4: Monthly client report compiler and async export (Desktop)</title>
+  <style>
+    /* ==========================================================================
+       GOVERNED BY UX SPINE & ENTERPRISE-UI-UX SKILL:
+       - docs/design/design-context.md
+       - DESIGN.md & EXPERIENCE.md
+       - specs/screen-spec-uj4-client-report-compiler.md
+       ========================================================================== */
+
+    :root {
+      --cc-white: #FFFFFF;
+      --cc-navy: #14243A;
+      --cc-navy-2: #17365D;
+      --cc-blue: #4F81BD;
+      --cc-blue-dark: #365F91;
+      --cc-teal: #126E6A;
+      --cc-teal-hover: #0E5855;
+      --cc-teal-wash: #EAF3F4;
+      --cc-row: #F4F7FA;
+      --cc-line: #263244;
+      --cc-border: #C7D1DC;
+      --cc-border-control: #6E7E91; /* 3.95:1 on #FFFFFF (WCAG 2.2 AA SC 1.4.11) */
+      --cc-border-hover: #526071;
+      --cc-muted: #5F6F82;
+      --cc-subtle: #7B8794;
+      --cc-page: #FFFFFF;
+      --cc-surface: #FFFFFF;
+      --cc-shell-backdrop: #F2F4F6;
+
+      --cc-success: #126E6A;
+      --cc-success-bg: #EAF3F1;
+      --cc-warning: #94651D;
+      --cc-warning-bg: #F7F1E6;
+      --cc-danger: #A34545;
+      --cc-danger-bg: #F8EEEE;
+      --cc-info: #4F81BD;
+      --cc-info-bg: #EEF3F9;
+
+      --cc-font-display: Arial, Helvetica, sans-serif;
+      --cc-font-body: Georgia, 'Times New Roman', serif;
+      --cc-font-ui: Arial, Helvetica, sans-serif;
+      --cc-text-xs: 0.75rem;
+      --cc-text-sm: 0.875rem;
+      --cc-text-base: 1rem;
+      --cc-text-lg: 1.125rem;
+      --cc-text-xl: 1.25rem;
+      --cc-text-2xl: 1.5rem;
+      --cc-text-3xl: 2rem;
+      --cc-text-4xl: 2.625rem;
+
+      --cc-space-1: 4px;
+      --cc-space-2: 8px;
+      --cc-space-3: 12px;
+      --cc-space-4: 16px;
+      --cc-space-5: 20px;
+      --cc-space-6: 24px;
+      --cc-space-8: 32px;
+      --cc-space-10: 40px;
+
+      --cc-border-thin: 1px solid var(--cc-border);
+      --cc-border-strong: 1px solid var(--cc-line);
+      --cc-radius: 3px;
+      --cc-radius-sm: 2px;
+      --cc-control-height: 40px;
+      --cc-focus: 0 0 0 3px rgba(79, 129, 189, 0.22);
+    }
+
+    html {
+      scroll-padding-top: 80px;
+      scroll-padding-bottom: 72px;
+    }
+
+    body {
+      margin: 0;
+      background: var(--cc-shell-backdrop);
+      color: var(--cc-navy);
+      font-family: var(--cc-font-body);
+      line-height: 1.42;
+      padding-bottom: 48px;
+    }
+
+    .cc-theme *, .cc-theme *::before, .cc-theme *::after { box-sizing: border-box; }
+    .cc-theme :where(a, button, input, select, textarea, [tabindex]:not([tabindex="-1"])):focus-visible {
+      outline: 2px solid var(--cc-blue-dark);
+      outline-offset: 2px;
+      box-shadow: var(--cc-focus);
+    }
+
+    .cc-skip-link {
+      position: absolute;
+      top: -9999px;
+      left: 16px;
+      z-index: 200;
+      min-height: var(--cc-control-height);
+      padding: 8px 16px;
+      background: var(--cc-navy-2);
+      color: var(--cc-white);
+      font: 700 var(--cc-text-sm)/1.2 var(--cc-font-ui);
+      text-decoration: none;
+      border-radius: var(--cc-radius-sm);
+    }
+    .cc-skip-link:focus,
+    .cc-skip-link:focus-visible {
+      top: 12px;
+    }
+
+    .cc-tabular { font-variant-numeric: tabular-nums; }
+    .cc-theme h1, .cc-theme h2, .cc-theme h3 { font-family: var(--cc-font-display); margin: 0; }
+    .cc-theme h1 { color: var(--cc-navy-2); font-size: var(--cc-text-4xl); line-height: 1.12; letter-spacing: -0.025em; font-weight: 700; }
+    .cc-theme h2 { color: var(--cc-blue); font-size: var(--cc-text-2xl); line-height: 1.2; font-weight: 700; }
+    .cc-theme h3 { color: var(--cc-navy-2); font-size: var(--cc-text-xl); line-height: 1.25; font-weight: 700; }
+    .cc-kicker { color: var(--cc-teal); font: 700 14px/1.25 var(--cc-font-body); letter-spacing: .045em; text-transform: uppercase; }
+    .cc-subtitle { color: var(--cc-blue-dark); font: italic 400 20px/1.35 var(--cc-font-display); }
+    .cc-meta { color: var(--cc-muted); font: 400 14px/1.35 var(--cc-font-body); font-variant-numeric: tabular-nums; }
+    .cc-rule { height: 1px; width: 100%; background: var(--cc-blue); border: 0; }
+
+    /* Interactive UX State Switcher */
+    .ux-state-switcher {
+      max-width: 1200px;
+      margin: 16px auto 0;
+      background: var(--cc-navy);
+      color: var(--cc-white);
+      border: 1px solid var(--cc-line);
+      padding: 12px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+      font-family: var(--cc-font-ui);
+    }
+    .ux-state-switcher__label {
+      font: 700 12px/1.2 var(--cc-font-ui);
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: #DCE5EE;
+    }
+    .ux-state-group {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    .ux-state-btn {
+      min-height: 36px;
+      padding: 0 10px;
+      border: 1px solid #6E7E91;
+      border-radius: 2px;
+      background: rgba(255, 255, 255, 0.08);
+      color: var(--cc-white);
+      font: 700 12px/1 var(--cc-font-ui);
+      cursor: pointer;
+    }
+    .ux-state-btn[aria-pressed="true"] {
+      background: var(--cc-teal);
+      border-color: var(--cc-white);
+    }
+
+    .browser-frame {
+      max-width: 1200px;
+      margin: 16px auto 24px;
+      border: 1px solid var(--cc-line);
+      background: var(--cc-shell-backdrop);
+    }
+    .browser-chrome {
+      background: var(--cc-navy);
+      color: var(--cc-white);
+      padding: 8px 16px;
+      font: 700 12px/1.3 var(--cc-font-ui);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .browser-url {
+      background: rgba(255,255,255,0.12);
+      padding: 4px 12px;
+      border-radius: 2px;
+      font-weight: 400;
+      color: #E2E8F0;
+    }
+
+    /* 1. app-shell-header */
+    .app-shell-header {
+      height: 64px;
+      background: var(--cc-white);
+      border-top: 2px solid var(--cc-blue);
+      border-bottom: 1px solid var(--cc-line);
+      padding: 0 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+    }
+    .shell-brand { display: flex; align-items: center; gap: 16px; }
+    .shell-org { font: 700 14px/1.2 var(--cc-font-ui); color: var(--cc-navy-2); }
+    .shell-nav { display: flex; align-items: center; gap: 20px; height: 100%; }
+    .shell-nav a { font: 700 14px/1.2 var(--cc-font-ui); color: var(--cc-muted); text-decoration: none; height: 100%; display: inline-flex; align-items: center; border-bottom: 2px solid transparent; }
+    .shell-nav a.is-active { color: var(--cc-navy-2); border-bottom-color: var(--cc-blue); }
+
+    .cc-page { max-width: 1120px; margin: 24px auto; padding: 56px 64px; background: var(--cc-white); border: 1px solid var(--cc-border); }
+    .cc-section { display: grid; gap: var(--cc-space-4); margin-top: var(--cc-space-10); }
+    .cc-stack { display: flex; flex-direction: column; gap: var(--cc-space-3); }
+    .cc-row { display: flex; align-items: center; gap: var(--cc-space-3); flex-wrap: wrap; }
+    .cc-spread { justify-content: space-between; }
+
+    /* 20. async-export-banner */
+    .cc-export-banner {
+      padding: 16px 20px;
+      border-radius: 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+    .cc-export-banner--compiling {
+      background: var(--cc-info-bg);
+      border: 1px solid #D4E0EF;
+      color: var(--cc-blue-dark);
+    }
+    .cc-export-banner--ready {
+      background: var(--cc-teal-wash);
+      border: 1px solid #C8E0DC;
+      color: var(--cc-navy);
+    }
+    .cc-export-banner--danger {
+      background: var(--cc-danger-bg);
+      border: 1px solid #EBCFCF;
+      color: #853838;
+    }
+    .cc-export-banner--warning {
+      background: var(--cc-warning-bg);
+      border: 1px solid #E8D9BA;
+      color: #795014;
+    }
+
+    /* 4. recommendation-callout */
+    .cc-callout { background: var(--cc-teal-wash); padding: 16px 20px; display: grid; gap: 8px; border: 0; border-radius: 0; }
+    .cc-callout__label { color: var(--cc-teal); font: 700 14px/1.25 var(--cc-font-body); text-transform: uppercase; letter-spacing: .035em; }
+    .cc-callout__body { color: var(--cc-navy); font: 400 18px/1.42 var(--cc-font-body); }
+
+    /* 5. data-table */
+    .cc-table-wrap { overflow-x: auto; border: var(--cc-border-strong); }
+    .cc-table { width: 100%; border-collapse: collapse; min-width: 560px; color: var(--cc-navy); font: 400 14px/1.35 var(--cc-font-body); font-variant-numeric: tabular-nums; }
+    .cc-table th { text-align: left; vertical-align: middle; background: var(--cc-navy); color: var(--cc-white); padding: 10px 12px; font: 700 14px/1.25 var(--cc-font-body); border: 1px solid var(--cc-line); }
+    .cc-table td { padding: 10px 12px; border: 1px solid var(--cc-line); vertical-align: middle; background: var(--cc-white); }
+    .cc-table tbody tr:nth-child(even) td { background: var(--cc-row); }
+    .cc-table td:first-child { font-weight: 700; }
+    .cc-table caption { caption-side: top; text-align: left; padding: 0 0 10px; color: var(--cc-muted); font: 400 14px/1.35 var(--cc-font-body); }
+
+    /* 6. editorial-card */
+    .cc-card-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+    .cc-card { background: var(--cc-surface); border: var(--cc-border-thin); border-radius: 2px; padding: 20px; box-shadow: none; display: flex; flex-direction: column; gap: 6px; }
+    .cc-card--emphasis { border-top: 3px solid var(--cc-blue); }
+    .cc-card__eyebrow { color: var(--cc-teal); font: 700 12px/1.3 var(--cc-font-body); letter-spacing: .05em; text-transform: uppercase; }
+    .cc-card__value { color: var(--cc-navy-2); font: 700 32px/1.1 var(--cc-font-display); font-variant-numeric: tabular-nums; }
+    .cc-card__note { color: var(--cc-muted); font: 400 13px/1.4 var(--cc-font-body); font-variant-numeric: tabular-nums; }
+
+    /* 7. button */
+    .cc-button { min-height: 40px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 0 16px; border: 1px solid transparent; border-radius: 2px; cursor: pointer; text-decoration: none; white-space: nowrap; font: 700 14px/1 var(--cc-font-ui); }
+    .cc-button--primary { background: var(--cc-navy-2); border-color: var(--cc-navy-2); color: var(--cc-white); }
+    .cc-button--secondary { background: var(--cc-white); border-color: var(--cc-navy-2); color: var(--cc-navy-2); }
+    .cc-button--teal { background: var(--cc-teal); border-color: var(--cc-teal); color: var(--cc-white); }
+    .cc-button--teal:hover { background: var(--cc-teal-hover); border-color: var(--cc-teal-hover); }
+    .cc-button--small { min-height: 36px; padding-inline: 12px; font-size: 12px; }
+    .cc-button[aria-disabled="true"] { opacity: 0.55; cursor: not-allowed; }
+
+    /* 8. form-field & 10. dropdown-editorial (3.95:1 border contrast) */
+    .cc-field { display: grid; gap: 6px; font-family: var(--cc-font-ui); }
+    .cc-label { color: var(--cc-navy-2); font: 700 14px/1.3 var(--cc-font-ui); }
+    .cc-input, .cc-select, .cc-textarea {
+      min-height: 40px;
+      border: 1px solid var(--cc-border-control);
+      border-radius: 2px;
+      background: var(--cc-white);
+      color: var(--cc-navy);
+      padding: 9px 11px;
+      font: 400 14px/1.4 var(--cc-font-ui);
+      font-variant-numeric: tabular-nums;
+    }
+    .cc-dropdown { position: relative; min-width: 260px; font-family: var(--cc-font-ui); }
+    .cc-dropdown__trigger {
+      width: 100%;
+      min-height: 40px;
+      border: 1px solid var(--cc-border-control);
+      border-radius: 2px;
+      background: var(--cc-white);
+      color: var(--cc-navy);
+      padding: 6px 11px;
+      font: 700 12px/1.3 var(--cc-font-ui);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      text-align: left;
+      cursor: pointer;
+    }
+    .cc-dropdown__menu {
+      position: absolute;
+      top: calc(100% + 4px);
+      left: 0;
+      right: 0;
+      z-index: 40;
+      margin: 0;
+      padding: 6px;
+      list-style: none;
+      background: var(--cc-white);
+      border: 1px solid var(--cc-line);
+      border-top: 2px solid var(--cc-blue);
+    }
+    .cc-dropdown__option {
+      padding: 8px 10px;
+      min-height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+      font: 400 13px/1.3 var(--cc-font-ui);
+    }
+    .cc-dropdown__option[aria-selected="true"] {
+      background: var(--cc-info-bg);
+      color: var(--cc-blue-dark);
+      font-weight: 700;
+    }
+
+    /* 11. status-badge */
+    .cc-status { display: inline-flex; align-items: center; gap: 6px; padding: 4px 8px; border-radius: 2px; font: 700 12px/1.2 var(--cc-font-ui); font-variant-numeric: tabular-nums; border: 1px solid transparent; white-space: nowrap; }
+    .cc-status--success { color: #126E6A; background: var(--cc-success-bg); border-color: #C8E0DC; }
+    .cc-status--warning { color: #795014; background: var(--cc-warning-bg); border-color: #E8D9BA; }
+    .cc-status--danger { color: #853838; background: var(--cc-danger-bg); border-color: #EBCFCF; }
+    .cc-status--info { color: var(--cc-blue-dark); background: var(--cc-info-bg); border-color: #D4E0EF; }
+    .cc-status--neutral { color: var(--cc-muted); background: #F1F3F5; border-color: #DCE1E6; }
+
+    /* 17. evidence-gallery */
+    .cc-evidence-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+    }
+    .cc-evidence-card {
+      background: var(--cc-white);
+      border: 1px solid var(--cc-border);
+      border-radius: 2px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+    .cc-evidence-thumb {
+      height: 132px;
+      width: 100%;
+      background: #DCE5EE;
+      border: 0;
+      border-bottom: 1px solid var(--cc-border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font: 700 12px/1.3 var(--cc-font-ui);
+      color: var(--cc-navy-2);
+      padding: 12px;
+      text-align: center;
+      cursor: pointer;
+    }
+    .cc-evidence-meta {
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      font: 400 13px/1.35 var(--cc-font-body);
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* Skeleton loading blocks */
+    .cc-skeleton-block {
+      background: #E4EAF0;
+      border: 1px solid var(--cc-border);
+      border-radius: 2px;
+      height: 88px;
+    }
+
+    /* Modal Dialog */
+    .cc-modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(20, 36, 58, 0.52);
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .cc-modal-backdrop[hidden] { display: none; }
+    .cc-modal {
+      width: 100%;
+      max-width: 560px;
+      background: var(--cc-white);
+      border: 1px solid var(--cc-line);
+      border-top: 3px solid var(--cc-blue);
+      padding: 24px;
+      display: grid;
+      gap: 14px;
+    }
+
+    @media (max-width: 760px) {
+      .cc-page { padding: 32px 22px; }
+      .cc-subtitle { font-size: var(--cc-text-lg); }
+      .cc-input, .cc-select, .cc-textarea { font-size: 1rem; }
+      .cc-button--small { min-height: 36px; }
+      .cc-card-grid, .cc-evidence-grid { grid-template-columns: 1fr; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+      }
+    }
+  </style>
+</head>
+<body class="cc-theme">
+
+  <a href="#main-content" class="cc-skip-link">Skip to main content</a>
+
+  <!-- Interactive UX State Switcher -->
+  <aside class="ux-state-switcher" aria-label="Interactive UX state switcher">
+    <span class="ux-state-switcher__label">Interactive UX state matrix (`UJ-4`):</span>
+    <div class="ux-state-group" role="group" aria-label="Select screen state">
+      <button type="button" class="ux-state-btn" data-state="default" aria-pressed="true">1. Default (Compiled dossier + Ready export)</button>
+      <button type="button" class="ux-state-btn" data-state="compiling" aria-pressed="false">2. Async compiling poll (`usePoll 3s`)</button>
+      <button type="button" class="ux-state-btn" data-state="empty" aria-pressed="false">3. Empty period (Zero-activity certification)</button>
+      <button type="button" class="ux-state-btn" data-state="loading" aria-pressed="false">4. Loading (Skeleton)</button>
+      <button type="button" class="ux-state-btn" data-state="error" aria-pressed="false">5. Error (422 Date range &amp; 429 Rate limit)</button>
+      <button type="button" class="ux-state-btn" data-state="partial" aria-pressed="false">6. Partial (Expired signed URL refresh)</button>
+    </div>
+  </aside>
+
+  <div class="browser-frame">
+    <div class="browser-chrome">
+      <span>Cloud Crafters Property and Asset Intelligence: Desktop Editorial Canvas (&gt;760px)</span>
+      <span class="browser-url">https://fm.cloudcrafters.ng/reports?client_account=lagoon-view-estates&amp;period=2026-11</span>
+      <span>Protagonist: Chidi Okafor (Operations Manager · UJ-4)</span>
+    </div>
+
+    <!-- 1. app-shell-header -->
+    <header class="app-shell-header" aria-label="Application shell header">
+      <div class="shell-brand">
+        <span class="shell-org">CLOUD CRAFTERS FM</span>
+        <div class="cc-dropdown">
+          <button
+            type="button"
+            id="report-client-scope-trigger"
+            class="cc-dropdown__trigger"
+            role="combobox"
+            aria-haspopup="listbox"
+            aria-expanded="false"
+            aria-controls="report-client-scope-listbox"
+            aria-labelledby="report-scope-label report-scope-value"
+          >
+            <div>
+              <div id="report-scope-label" style="color: var(--cc-muted); font-size: 12px; text-transform: uppercase; letter-spacing: 0.04em;">Client account scope</div>
+              <div id="report-scope-value" style="color: var(--cc-navy-2); font-size: 13px; font-weight: 700;">Lagoon View Estates Ltd (3 sites)</div>
+            </div>
+            <span class="cc-status cc-status--success">Active</span>
+          </button>
+          <ul id="report-client-scope-listbox" class="cc-dropdown__menu" role="listbox" aria-label="Permitted client accounts" hidden>
+            <li class="cc-dropdown__option" role="option" aria-selected="true" data-client="Lagoon View Estates Ltd (3 sites)" data-rc="Lagoon View Estates Ltd (RC-1048291)" data-mode="default">
+              <span>Lagoon View Estates Ltd (3 sites)</span>
+              <span class="cc-status cc-status--success">6 inspections</span>
+            </li>
+            <li class="cc-dropdown__option" role="option" aria-selected="false" data-client="Victoria Crest Holdings (2 sites)" data-rc="Victoria Crest Holdings (RC-882910)" data-mode="empty">
+              <span>Victoria Crest Holdings (2 sites)</span>
+              <span class="cc-status cc-status--neutral">0 activity in Nov</span>
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <nav class="shell-nav" aria-label="Primary module navigation">
+        <a href="#portfolio">Portfolio and Properties</a>
+        <a href="#assets">Assets</a>
+        <a href="#inspections">Inspections</a>
+        <a href="#work-orders">Work Orders</a>
+        <a href="#reports" class="is-active">Client Reports</a>
+        <a href="#audit">Organisation and Audit</a>
+      </nav>
+
+      <div class="cc-row" style="gap: 10px;">
+        <span class="cc-status cc-status--neutral">Operations Manager</span>
+        <span style="font: 700 13px/1 var(--cc-font-ui); color: var(--cc-navy-2);">Chidi Okafor</span>
+      </div>
+    </header>
+
+    <!-- Primary Editorial Page Sheet: Active Monthly Client Report Compiler & Preview -->
+    <main id="main-content" class="cc-page" tabindex="-1">
+
+      <!-- Report Compiler Parameters Bar (One Primary CTA: Export PDF and CSV; Secondary CTA: Compile report preview) -->
+      <section class="cc-card" style="margin-bottom: 28px; background: var(--cc-row);" aria-label="Report compilation parameters">
+        <div class="cc-row cc-spread">
+          <div class="cc-row" style="gap: 16px;">
+            <div class="cc-field" style="min-width: 280px;">
+              <label class="cc-label" for="rep-client">Single client account (`FR-17`)</label>
+              <input id="rep-client" type="text" class="cc-input" value="Lagoon View Estates Ltd (RC-1048291)" readonly />
+            </div>
+            <div class="cc-field">
+              <label class="cc-label" for="rep-start">Period start date</label>
+              <input id="rep-start" type="date" class="cc-input" value="2026-11-01" />
+            </div>
+            <div class="cc-field">
+              <label class="cc-label" for="rep-end">Period end date</label>
+              <input id="rep-end" type="date" class="cc-input" value="2026-11-30" />
+            </div>
+          </div>
+          <div class="cc-row" style="align-self: flex-end;">
+            <button type="button" id="btn-compile-preview" class="cc-button cc-button--secondary">Compile report preview</button>
+            <button type="button" id="btn-export-report" class="cc-button cc-button--teal">Export PDF and CSV</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- 20. async-export-banner -->
+      <section class="cc-stack" style="margin-bottom: 32px;" aria-label="Asynchronous export status banners">
+
+        <!-- State 5: Error 422 Date Range & 429 Rate Limit Banner -->
+        <div id="banner-error-422-429" class="cc-export-banner cc-export-banner--danger" role="alert" hidden>
+          <div class="cc-stack" style="gap: 4px;">
+            <div style="font: 700 14px/1.25 var(--cc-font-ui);">Validation and rate-limit guard (`HTTP 422` / `HTTP 429`)</div>
+            <div style="font: 400 14px/1.35 var(--cc-font-body);">
+              <strong>Date range rule (`FR-17`):</strong> Period end date must be on or after the period start date, and a single Client Account is required.<br/>
+              <strong>Export rate limit (`NFR-2.5`):</strong> Maximum 5 report exports per minute per organisation (`Retry-After: 42s`).
+            </div>
+          </div>
+          <span class="cc-status cc-status--danger">Retry in 42s</span>
+        </div>
+
+        <!-- State 6: Partial (Expired 10-minute Signed R2 URL Auto-Refresh) -->
+        <div id="banner-partial-expired" class="cc-export-banner cc-export-banner--warning" role="status" aria-live="polite" hidden>
+          <div class="cc-row">
+            <span class="cc-status cc-status--warning">Signed link expired (10-min TTL)</span>
+            <span style="font: 400 14px/1.35 var(--cc-font-body); color: var(--cc-navy);">
+              The 10-minute Cloudflare R2 download link has expired (`NFR-2.4`). Click <strong>Refresh signed download link</strong> to issue a new 10-minute URL without recompiling the PDF.
+            </span>
+          </div>
+          <button type="button" id="btn-refresh-signed-url" class="cc-button cc-button--secondary">Refresh signed download link</button>
+        </div>
+
+        <!-- State A: Queued / Compiling Polling Banner (usePoll(3000)) -->
+        <div id="banner-compiling" class="cc-export-banner cc-export-banner--compiling" role="status" aria-live="polite" hidden>
+          <div class="cc-row">
+            <span class="cc-status cc-status--info">Compiling PDF report...</span>
+            <span style="font: 400 14px/1.35 var(--cc-font-body); color: var(--cc-navy);">
+              Background worker rendering Chromium PDF and CSV for <strong>Lagoon View Estates Ltd (Nov 2026)</strong>. Polling automatically every 3 seconds (AD-14, AD-15).
+            </span>
+          </div>
+          <span class="cc-meta">Job ID: <code>exp_0192f512_lve</code> · Rate limit: 5/min per org</span>
+        </div>
+
+        <!-- State B: Ready Banner with 10-minute Signed R2 Download Links -->
+        <div id="banner-ready" class="cc-export-banner cc-export-banner--ready" role="status" aria-live="polite">
+          <div class="cc-row">
+            <span class="cc-status cc-status--success">Report ready</span>
+            <span style="font: 400 14px/1.35 var(--cc-font-body); color: var(--cc-navy);">
+              <strong>Lagoon View Estates Ltd: November 2026 Proof-of-Work Dossier</strong> compiled at 17:14 WAT. Signed Cloudflare R2 links expire in 10 minutes.
+            </span>
+          </div>
+          <div class="cc-row">
+            <a href="#download-pdf" class="cc-button cc-button--secondary">Download PDF (10-min signed link)</a>
+            <a href="#download-csv" class="cc-button cc-button--secondary">Download CSV</a>
+          </div>
+        </div>
+      </section>
+
+      <!-- STATE 4: LOADING SKELETON -->
+      <section id="report-loading-skeleton" class="cc-stack" hidden aria-busy="true" aria-label="Loading report preview">
+        <div class="cc-kicker">Aggregating tenant and client-scoped inspection and maintenance records...</div>
+        <div class="cc-card-grid">
+          <div class="cc-skeleton-block"></div>
+          <div class="cc-skeleton-block"></div>
+          <div class="cc-skeleton-block"></div>
+          <div class="cc-skeleton-block"></div>
+        </div>
+        <div class="cc-skeleton-block" style="height: 240px;"></div>
+      </section>
+
+      <!-- ACTIVE DOSSIER CONTENT -->
+      <div id="report-dossier-content">
+        <!-- 3. page-header (Compiled Editorial Dossier Cover Header) -->
+        <header class="cc-stack">
+          <div class="cc-kicker">Monthly facilities management and asset intelligence dossier · November 2026</div>
+          <h1 id="dossier-heading">Lagoon View Estates Ltd: Operational proof of work</h1>
+          <hr class="cc-rule" />
+          <div class="cc-subtitle">Compiled inspection execution, maintenance work orders, accountable asset condition summaries, and timestamped field evidence across 3 registered properties.</div>
+          <div class="cc-row cc-spread">
+            <span class="cc-meta">Reporting period: 01 Nov 2026 to 30 Nov 2026 · Compiled by: Chidi Okafor (Operations Manager) · Timezone: Africa/Lagos (WAT)</span>
+            <span class="cc-status cc-status--success">Tenant and client-scope verified</span>
+          </div>
+        </header>
+
+        <!-- 6. editorial-card Executive Summary Strip -->
+        <section class="cc-section" aria-label="Executive summary metrics">
+          <div class="cc-card-grid">
+            <div class="cc-card cc-card--emphasis">
+              <span class="cc-card__eyebrow">Properties covered</span>
+              <span class="cc-card__value">3</span>
+              <span class="cc-card__note">Victoria Island (LVE-VI-01), Lekki Phase 1 (LVE-LK-02), Ikoyi (LVE-IK-03)</span>
+            </div>
+            <div class="cc-card">
+              <span class="cc-card__eyebrow">Completed inspections</span>
+              <span class="cc-card__value">6 / 6</span>
+              <span class="cc-card__note">100% supervisor signed-off and immutable</span>
+            </div>
+            <div class="cc-card">
+              <span class="cc-card__eyebrow">Work orders by status</span>
+              <span class="cc-card__value">5</span>
+              <span class="cc-card__note">4 Completed · 1 In progress · 0 Overdue</span>
+            </div>
+            <div class="cc-card">
+              <span class="cc-card__eyebrow">Registered assets</span>
+              <span class="cc-card__value">42</span>
+              <span class="cc-card__note">40 Good · 2 Fair (Needs attention)</span>
+            </div>
+          </div>
+        </section>
+
+        <!-- 4. recommendation-callout (Single pale-teal callout per surface) -->
+        <section id="section-executive-callout" class="cc-section" aria-label="Executive operational takeaway">
+          <div class="cc-callout">
+            <div class="cc-callout__label">Executive summary and preventive action · November 2026</div>
+            <div class="cc-callout__body">
+              During the scheduled 03 Nov 2026 plant room inspection at <strong>14 Adeola Odeku Street (`LVE-VI-01`)</strong>, Site Supervisor <strong>Amara Bello</strong> identified alternator drive-belt fraying on the <strong>500kVA Mikano Standby Generator (`LVE-GEN-01`)</strong>. Work Order <code>WO-2026-0142</code> was raised inline and completed the same day by Technician <strong>Tunde Adeyemi</strong> with OEM tensioner pulley and belt replacement prior to weekend peak load.
+            </div>
+          </div>
+        </section>
+
+        <!-- 5. data-table: Completed Inspections & Maintenance Work Orders -->
+        <section id="section-ledger-table" class="cc-section" aria-label="Inspections and work orders ledger">
+          <div>
+            <div class="cc-kicker">Section 1 · Field execution ledger</div>
+            <h2>Completed inspections and maintenance work orders</h2>
+          </div>
+
+          <div class="cc-table-wrap">
+            <table class="cc-table">
+              <caption>All scheduled inspections and maintenance work orders recorded for Lagoon View Estates Ltd between 01 Nov 2026 and 30 Nov 2026.</caption>
+              <thead>
+                <tr>
+                  <th scope="col" style="width: 24%;">Reference and type</th>
+                  <th scope="col">Property and zone</th>
+                  <th scope="col">Target asset / template</th>
+                  <th scope="col">Status</th>
+                  <th scope="col">Responsible staff</th>
+                  <th scope="col">Completed at (WAT)</th>
+                  <th scope="col" style="text-align: right;">Evidence</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>
+                    INSP-2026-089 · Scheduled inspection
+                    <div class="cc-meta">Generator and Plant Room Checklist (v2)</div>
+                  </td>
+                  <td>LVE-VI-01 · Generator House</td>
+                  <td>LVE-GEN-01 and LVE-ATS-01</td>
+                  <td><span class="cc-status cc-status--success">Approved (Immutable)</span></td>
+                  <td>Amara Bello (Site Supervisor)</td>
+                  <td>03 Nov 2026, 14:20</td>
+                  <td style="text-align: right;">2 photos</td>
+                </tr>
+                <tr>
+                  <td>
+                    WO-2026-0142 · Corrective work order
+                    <div class="cc-meta">Raised from INSP-2026-089 Q5 fault</div>
+                  </td>
+                  <td>LVE-VI-01 · Generator House</td>
+                  <td>LVE-GEN-01 · 500kVA Mikano Gen</td>
+                  <td><span class="cc-status cc-status--success">Completed</span></td>
+                  <td>Tunde Adeyemi (Technician)</td>
+                  <td>03 Nov 2026, 16:45</td>
+                  <td style="text-align: right;">2 photos</td>
+                </tr>
+                <tr>
+                  <td>
+                    WO-2026-0138 · Preventive service
+                    <div class="cc-meta">Quarterly VRV condenser coil wash</div>
+                  </td>
+                  <td>LVE-VI-01 · Roof Plant</td>
+                  <td>LVE-HVAC-01 · Daikin VRV IV Bank</td>
+                  <td><span class="cc-status cc-status--success">Completed</span></td>
+                  <td>Musa Ibrahim (HVAC Lead)</td>
+                  <td>02 Nov 2026, 13:15</td>
+                  <td style="text-align: right;">3 photos</td>
+                </tr>
+                <tr>
+                  <td>
+                    WO-2026-0149 · Facility maintenance
+                    <div class="cc-meta">Perimeter drainage desilting (Property-level)</div>
+                  </td>
+                  <td>LVE-LK-02 · Admiralty Way, Lekki Ph 1</td>
+                  <td>Property-level (No asset bound)</td>
+                  <td><span class="cc-status cc-status--info">In progress</span></td>
+                  <td>Tunde Adeyemi (Technician)</td>
+                  <td>Est. 05 Nov 2026</td>
+                  <td style="text-align: right;">1 photo</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- 17. evidence-gallery: Timestamped Field Evidence with Provenance Metadata -->
+        <section id="section-evidence-gallery" class="cc-section" aria-label="Photographic evidence gallery">
+          <div>
+            <div class="cc-kicker">Section 2 · Photographic proof of work (`FR-21`)</div>
+            <h2>Verified field evidence and provenance metadata</h2>
+            <p class="cc-meta">Click any evidence thumbnail to inspect full-resolution provenance metadata.</p>
+          </div>
+
+          <div class="cc-evidence-grid">
+            <article class="cc-evidence-card">
+              <button type="button" class="cc-evidence-thumb" data-evidence-title="INSP-2026-089 · Pre-repair fault photo (`frayed-belt-lve-gen-01.webp`)" data-evidence-meta="Asset: LVE-GEN-01 · Uploaded by Amara Bello on 03 Nov 2026, 14:09 WAT · GPS: 6.4284° N, 3.4222° E (±9 m)">
+                [Inspect signed R2 image · frayed-belt-lve-gen-01.webp]
+              </button>
+              <div class="cc-evidence-meta">
+                <div style="font-weight: 700; color: var(--cc-navy-2);">INSP-2026-089 · Pre-repair fault photo</div>
+                <div><strong>Asset:</strong> LVE-GEN-01 (500kVA Mikano Generator)</div>
+                <div><strong>Uploaded by:</strong> Amara Bello · 03 Nov 2026, 14:09 WAT</div>
+                <div><span class="cc-status cc-status--success">GPS: 6.4284° N, 3.4222° E (±9 m)</span></div>
+              </div>
+            </article>
+
+            <article class="cc-evidence-card">
+              <button type="button" class="cc-evidence-thumb" data-evidence-title="WO-2026-0142 · Mandatory completion photo (`new-oem-belt-installed-lve-gen-01.webp`)" data-evidence-meta="Asset: LVE-GEN-01 · Uploaded by Tunde Adeyemi on 03 Nov 2026, 16:45 WAT · GPS unavailable inside enclosed plant room (Timestamp verified)">
+                [Inspect signed R2 image · new-oem-belt-installed-lve-gen-01.webp]
+              </button>
+              <div class="cc-evidence-meta">
+                <div style="font-weight: 700; color: var(--cc-navy-2);">WO-2026-0142 · Mandatory completion photo</div>
+                <div><strong>Asset:</strong> LVE-GEN-01 (OEM pulley and belt fitted)</div>
+                <div><strong>Uploaded by:</strong> Tunde Adeyemi · 03 Nov 2026, 16:45 WAT</div>
+                <div><span class="cc-status cc-status--neutral">GPS unavailable · Timestamp verified</span></div>
+              </div>
+            </article>
+
+            <article class="cc-evidence-card">
+              <button type="button" class="cc-evidence-thumb" data-evidence-title="WO-2026-0138 · Condenser coil pressure wash (`daikin-vrv-coil-wash-lve-hvac-01.webp`)" data-evidence-meta="Asset: LVE-HVAC-01 · Uploaded by Musa Ibrahim on 02 Nov 2026, 13:10 WAT · GPS: 6.4285° N, 3.4221° E (±6 m)">
+                [Inspect signed R2 image · daikin-vrv-coil-wash-lve-hvac-01.webp]
+              </button>
+              <div class="cc-evidence-meta">
+                <div style="font-weight: 700; color: var(--cc-navy-2);">WO-2026-0138 · Condenser coil pressure wash</div>
+                <div><strong>Asset:</strong> LVE-HVAC-01 (Daikin VRV IV Bank)</div>
+                <div><strong>Uploaded by:</strong> Musa Ibrahim · 02 Nov 2026, 13:10 WAT</div>
+                <div><span class="cc-status cc-status--success">GPS: 6.4285° N, 3.4221° E (±6 m)</span></div>
+              </div>
+            </article>
+          </div>
+        </section>
+
+        <!-- Recent Exports Table (AD-14, AD-15) -->
+        <section id="section-exports-table" class="cc-section" aria-label="Recent report exports">
+          <div>
+            <div class="cc-kicker">Asynchronous export ledger (`audit_events: report.exported`)</div>
+            <h2>Recent exports for Lagoon View Estates Ltd</h2>
+          </div>
+
+          <div class="cc-table-wrap">
+            <table class="cc-table">
+              <caption>Generated PDF and CSV report archives stored in private Cloudflare R2 storage (`exports/{organisation_id}/`).</caption>
+              <thead>
+                <tr>
+                  <th scope="col" style="width: 28%;">Report period and scope</th>
+                  <th scope="col">Requested by</th>
+                  <th scope="col">Generated at (WAT)</th>
+                  <th scope="col">Export status</th>
+                  <th scope="col" style="text-align: right;">Signed download actions (10-min TTL)</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>01 Nov 2026 to 30 Nov 2026 · Lagoon View Estates Ltd</td>
+                  <td>Chidi Okafor</td>
+                  <td>03 Nov 2026, 17:14 WAT</td>
+                  <td><span class="cc-status cc-status--success">Ready</span></td>
+                  <td style="text-align: right;">
+                    <div class="cc-row" style="justify-content: flex-end; gap: 8px;">
+                      <a href="#dl-pdf-nov" class="cc-button cc-button--secondary cc-button--small">Download PDF (1.4 MB)</a>
+                      <a href="#dl-csv-nov" class="cc-button cc-button--secondary cc-button--small">Download CSV (42 KB)</a>
+                    </div>
+                  </td>
+                </tr>
+                <tr>
+                  <td>01 Oct 2026 to 31 Oct 2026 · Lagoon View Estates Ltd</td>
+                  <td>Chidi Okafor</td>
+                  <td>31 Oct 2026, 18:05 WAT</td>
+                  <td><span class="cc-status cc-status--success">Ready</span></td>
+                  <td style="text-align: right;">
+                    <div class="cc-row" style="justify-content: flex-end; gap: 8px;">
+                      <a href="#dl-pdf-oct" class="cc-button cc-button--secondary cc-button--small">Download PDF (1.8 MB)</a>
+                      <a href="#dl-csv-oct" class="cc-button cc-button--secondary cc-button--small">Download CSV (56 KB)</a>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </div>
+
+      <!-- Load-Bearing Secondary Section: State 3 — Explicit Zero-Activity Period Certification State -->
+      <section id="section-zero-activity" class="cc-section" style="border-top: 2px solid var(--cc-line); padding-top: 32px;" aria-label="Alternate state: Zero-activity period certification">
+        <div>
+          <div class="cc-kicker">Load-bearing alternate state · State 3 (`UJ-4` edge case · `FR-17`)</div>
+          <h2>Explicit zero-activity period certification (`Victoria Crest Holdings`)</h2>
+          <p class="cc-meta">When a Client Account has zero inspections or work orders in the selected date range, the compiler and PDF export never render a blank page; they emit a formal register certification.</p>
+        </div>
+
+        <div class="cc-card" style="display: grid; gap: 16px;">
+          <div style="background: var(--cc-teal-wash); padding: 16px 20px;">
+            <div class="cc-callout__label">Formal zero-activity period certification · 01 Nov 2026 to 30 Nov 2026</div>
+            <div class="cc-callout__body" style="font-size: 16px; margin-top: 4px;">
+              No scheduled inspections or work orders were recorded for <strong>Victoria Crest Holdings</strong> between <strong>01 Nov 2026</strong> and <strong>30 Nov 2026</strong>. All <strong>2 registered properties</strong> and <strong>14 assets</strong> remain on the active register with accountable custodians assigned.
+            </div>
+          </div>
+
+          <div class="cc-table-wrap">
+            <table class="cc-table">
+              <thead>
+                <tr>
+                  <th scope="col">Certification metric</th>
+                  <th scope="col">Recorded count (01 Nov to 30 Nov 2026)</th>
+                  <th scope="col">Active portfolio baseline</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Registered client properties</td>
+                  <td>0 site changes during period</td>
+                  <td>2 active properties (Lekki Phase 1 and Ikoyi)</td>
+                </tr>
+                <tr>
+                  <td>Registered client assets</td>
+                  <td>0 condition changes during period</td>
+                  <td>14 active assets (100% custodian assigned)</td>
+                </tr>
+                <tr>
+                  <td>Scheduled inspections and work orders</td>
+                  <td>0 completed / 0 open / 0 overdue</td>
+                  <td>Certified zero-activity period (Exportable to PDF and CSV)</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- Evidence Provenance Lightbox Modal Dialog -->
+  <div id="evidence-modal-backdrop" class="cc-modal-backdrop" hidden>
+    <div class="cc-modal" role="dialog" aria-modal="true" aria-labelledby="evidence-modal-title" aria-describedby="evidence-modal-desc">
+      <div class="cc-kicker">Photographic provenance inspection · FR-21</div>
+      <h2 id="evidence-modal-title" style="font: 700 18px/1.25 var(--cc-font-display); color: var(--cc-navy-2); margin: 0;">INSP-2026-089 · Pre-repair fault photo</h2>
+      <div style="height: 220px; background: #DCE5EE; border: 1px solid var(--cc-border); display: flex; align-items: center; justify-content: center; font: 700 13px/1.3 var(--cc-font-ui); color: var(--cc-navy-2); padding: 16px; text-align: center;">
+        [Full-resolution signed Cloudflare R2 WebP image preview · 1920x1440 px]
+      </div>
+      <p id="evidence-modal-desc" class="cc-meta" style="color: var(--cc-navy); margin: 0;">
+        Asset: LVE-GEN-01 · Uploaded by Amara Bello on 03 Nov 2026, 14:09 WAT · GPS: 6.4284° N, 3.4222° E (±9 m)
+      </p>
+      <div style="display: flex; justify-content: flex-end; gap: 8px;">
+        <button type="button" id="btn-close-evidence-modal" class="cc-button cc-button--secondary">Close preview</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      const stateBtns = document.querySelectorAll('.ux-state-btn');
+      const bannerCompiling = document.getElementById('banner-compiling');
+      const bannerReady = document.getElementById('banner-ready');
+      const bannerError = document.getElementById('banner-error-422-429');
+      const bannerPartial = document.getElementById('banner-partial-expired');
+      const loadingSkeleton = document.getElementById('report-loading-skeleton');
+      const dossierContent = document.getElementById('report-dossier-content');
+      const zeroActivitySection = document.getElementById('section-zero-activity');
+      const btnExport = document.getElementById('btn-export-report');
+      const btnRefreshUrl = document.getElementById('btn-refresh-signed-url');
+      const repClientInput = document.getElementById('rep-client');
+
+      function applyState(state) {
+        stateBtns.forEach(function (b) {
+          b.setAttribute('aria-pressed', String(b.getAttribute('data-state') === state));
+        });
+
+        bannerCompiling.hidden = state !== 'compiling';
+        bannerReady.hidden = state !== 'default';
+        bannerError.hidden = state !== 'error';
+        bannerPartial.hidden = state !== 'partial';
+        loadingSkeleton.hidden = state !== 'loading';
+
+        if (state === 'loading') {
+          dossierContent.hidden = true;
+          zeroActivitySection.hidden = true;
+        } else if (state === 'empty') {
+          dossierContent.hidden = true;
+          zeroActivitySection.hidden = false;
+          repClientInput.value = 'Victoria Crest Holdings (RC-882910)';
+        } else {
+          dossierContent.hidden = false;
+          zeroActivitySection.hidden = false;
+          repClientInput.value = 'Lagoon View Estates Ltd (RC-1048291)';
+        }
+      }
+
+      stateBtns.forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          applyState(btn.getAttribute('data-state'));
+        });
+      });
+
+      // Live Export Polling Simulation
+      btnExport.addEventListener('click', function () {
+        applyState('compiling');
+        setTimeout(function () {
+          applyState('default');
+        }, 1800);
+      });
+
+      if (btnRefreshUrl) {
+        btnRefreshUrl.addEventListener('click', function () {
+          applyState('default');
+        });
+      }
+
+      // Tier-2 Client Account Scope Combobox
+      const scopeTrigger = document.getElementById('report-client-scope-trigger');
+      const scopeListbox = document.getElementById('report-client-scope-listbox');
+      const scopeValue = document.getElementById('report-scope-value');
+      if (scopeTrigger && scopeListbox) {
+        scopeTrigger.addEventListener('click', function () {
+          const expanded = scopeTrigger.getAttribute('aria-expanded') === 'true';
+          scopeTrigger.setAttribute('aria-expanded', String(!expanded));
+          scopeListbox.hidden = expanded;
+        });
+        scopeListbox.querySelectorAll('[role="option"]').forEach(function (opt) {
+          opt.addEventListener('click', function () {
+            scopeListbox.querySelectorAll('[role="option"]').forEach(function (o) { o.setAttribute('aria-selected', 'false'); });
+            opt.setAttribute('aria-selected', 'true');
+            scopeValue.textContent = opt.getAttribute('data-client');
+            repClientInput.value = opt.getAttribute('data-rc');
+            scopeTrigger.setAttribute('aria-expanded', 'false');
+            scopeListbox.hidden = true;
+            applyState(opt.getAttribute('data-mode'));
+            scopeTrigger.focus();
+          });
+        });
+      }
+
+      // Evidence Provenance Lightbox Modal
+      const evidenceBackdrop = document.getElementById('evidence-modal-backdrop');
+      const evidenceTitle = document.getElementById('evidence-modal-title');
+      const evidenceDesc = document.getElementById('evidence-modal-desc');
+      const closeEvidenceBtn = document.getElementById('btn-close-evidence-modal');
+      let lastThumb = null;
+
+      document.querySelectorAll('.cc-evidence-thumb').forEach(function (thumb) {
+        thumb.addEventListener('click', function () {
+          lastThumb = thumb;
+          evidenceTitle.textContent = thumb.getAttribute('data-evidence-title');
+          evidenceDesc.textContent = thumb.getAttribute('data-evidence-meta');
+          evidenceBackdrop.hidden = false;
+          closeEvidenceBtn.focus();
+        });
+      });
+
+      function closeEvidenceModal() {
+        evidenceBackdrop.hidden = true;
+        if (lastThumb) lastThumb.focus();
+      }
+      closeEvidenceBtn.addEventListener('click', closeEvidenceModal);
+      document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape' && !evidenceBackdrop.hidden) closeEvidenceModal();
+      });
+    })();
+  </script>
+</body>
+</html>

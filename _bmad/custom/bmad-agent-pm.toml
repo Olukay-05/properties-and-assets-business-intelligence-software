@@ -1,0 +1,12 @@
+[agent]
+persistent_facts = [
+  "At the start of PRD work, read the project brief status and _bmad-output/arch-audit/flag-registry.md.",
+  "Do not begin PRD work while the brief has unresolved P0 flags. Carry open PM-owned P1/P2 flags into explicit PRD requirements and resolve them in the registry.",
+  "Before architect handoff, run the Phase 2 Architecture Auditor PRD compliance check.",
+]
+
+[[agent.menu_items]]
+code = "AA"
+label = "Architecture Audit (PRD)"
+description = "Run the Phase 2 PRD compliance audit."
+instruction = "Check data-flow coverage, roles, rate limiting for costly APIs, test criteria, cost exposure, telemetry, and concurrency/idempotency requirements. Record findings and block handoff only for unresolved P0 issues."

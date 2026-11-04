@@ -1,0 +1,67 @@
+# Local development stack.
+#
+# Only the infrastructure services run in containers: PostgreSQL 17 with PostGIS,
+# and RustFS as the local S3-compatible object store. The application itself runs
+# natively (`php artisan serve` + `pnpm dev`) for fast feedback.
+#
+#   docker compose up -d
+#   php artisan app:storage:init     # creates the bucket (idempotent)
+#   php artisan migrate
+#   php artisan serve
+#   pnpm dev
+#
+# Storage is provider-agnostic: the application talks to any S3-compatible
+# endpoint through Laravel's standard `s3` disk, configured entirely by the
+# AWS_* environment variables. Locally that endpoint is RustFS; in production it
+# is Cloudflare R2. No application or business code knows which provider is in
+# use, so switching providers is a configuration change, never a code change.
+#
+# Images are pinned by digest so a local stack never changes silently underneath
+# the team. To move a service forward, replace the tag and digest together:
+#   docker pull <image:tag>
+#   docker image inspect <image:tag> --format '{{json .RepoDigests}}'
+#
+# Ports are deliberately non-default so a machine-wide Postgres or S3 tool does
+# not collide: Postgres on 5433, RustFS S3 API on 9000, RustFS console on 9001.
+
+services:
+  postgres:
+    image: postgis/postgis:17-3.5@sha256:01a6a70e41e6c4467c8f55f6063555ed72db2d6662cd0d571040d42eadaeb6f6
+    container_name: pai-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_DATABASE:-property_asset_intelligence}
+      POSTGRES_USER: ${DB_USERNAME:-pai}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-secret}
+    ports:
+      - "${DB_PORT:-5433}:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-pai} -d ${DB_DATABASE:-property_asset_intelligence}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  storage:
+    image: rustfs/rustfs:1.0.4@sha256:ed9210d6411d77ffceb70d94b964a3cb7d225983368bc25bebe01e995293dcc2
+    container_name: pai-storage
+    restart: unless-stopped
+    environment:
+      RUSTFS_ACCESS_KEY: ${AWS_ACCESS_KEY_ID:-pai-local}
+      RUSTFS_SECRET_KEY: ${AWS_SECRET_ACCESS_KEY:-pai-local-secret}
+      RUSTFS_CONSOLE_ENABLE: "true"
+    ports:
+      - "${S3_API_PORT:-9000}:9000"
+      - "${S3_CONSOLE_PORT:-9001}:9001"
+    volumes:
+      - storage-data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:9000/health/ready || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+
+volumes:
+  postgres-data:
+  storage-data:

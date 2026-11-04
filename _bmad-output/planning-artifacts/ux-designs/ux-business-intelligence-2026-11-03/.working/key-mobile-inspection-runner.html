@@ -1,0 +1,985 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Key screen UJ-2: Mobile inspection runner and immutable approved state</title>
+  <style>
+    /* ==========================================================================
+       GOVERNED BY UX SPINE & ENTERPRISE-UI-UX SKILL:
+       - docs/design/design-context.md
+       - DESIGN.md & EXPERIENCE.md
+       - specs/screen-spec-uj2-mobile-inspection-runner.md
+       ========================================================================== */
+
+    :root {
+      --cc-white: #FFFFFF;
+      --cc-navy: #14243A;
+      --cc-navy-2: #17365D;
+      --cc-blue: #4F81BD;
+      --cc-blue-dark: #365F91;
+      --cc-teal: #126E6A;
+      --cc-teal-hover: #0E5855;
+      --cc-teal-wash: #EAF3F4;
+      --cc-row: #F4F7FA;
+      --cc-line: #263244;
+      --cc-border: #C7D1DC;
+      --cc-border-control: #6E7E91; /* 3.95:1 on #FFFFFF (WCAG 2.2 AA SC 1.4.11) */
+      --cc-border-hover: #526071;
+      --cc-muted: #5F6F82;
+      --cc-subtle: #7B8794;
+      --cc-page: #FFFFFF;
+      --cc-surface: #FFFFFF;
+      --cc-shell-backdrop: #F2F4F6;
+
+      --cc-success: #126E6A;
+      --cc-success-bg: #EAF3F1;
+      --cc-warning: #94651D;
+      --cc-warning-bg: #F7F1E6;
+      --cc-danger: #A34545;
+      --cc-danger-bg: #F8EEEE;
+      --cc-info: #4F81BD;
+      --cc-info-bg: #EEF3F9;
+
+      --cc-font-display: Arial, Helvetica, sans-serif;
+      --cc-font-body: Georgia, 'Times New Roman', serif;
+      --cc-font-ui: Arial, Helvetica, sans-serif;
+      --cc-text-xs: 0.75rem;
+      --cc-text-sm: 0.875rem;
+      --cc-text-base: 1rem;
+      --cc-text-lg: 1.125rem;
+      --cc-text-xl: 1.25rem;
+
+      --cc-space-1: 4px;
+      --cc-space-2: 8px;
+      --cc-space-3: 12px;
+      --cc-space-4: 16px;
+      --cc-space-5: 20px;
+      --cc-space-6: 24px;
+
+      --cc-radius: 3px;
+      --cc-radius-sm: 2px;
+      --cc-control-height: 40px;
+      --cc-focus: 0 0 0 3px rgba(79, 129, 189, 0.22);
+    }
+
+    html {
+      scroll-padding-top: 80px;
+      scroll-padding-bottom: 72px;
+    }
+
+    body {
+      margin: 0;
+      background: var(--cc-shell-backdrop);
+      color: var(--cc-navy);
+      font-family: var(--cc-font-body);
+      padding: 20px;
+    }
+
+    .cc-theme *, .cc-theme *::before, .cc-theme *::after { box-sizing: border-box; }
+    .cc-theme :where(a, button, input, select, textarea, [tabindex]:not([tabindex="-1"])):focus-visible {
+      outline: 2px solid var(--cc-blue-dark);
+      outline-offset: 2px;
+      box-shadow: var(--cc-focus);
+    }
+
+    .cc-skip-link {
+      position: absolute;
+      top: -9999px;
+      left: 16px;
+      z-index: 200;
+      min-height: var(--cc-control-height);
+      padding: 8px 16px;
+      background: var(--cc-navy-2);
+      color: var(--cc-white);
+      font: 700 var(--cc-text-sm)/1.2 var(--cc-font-ui);
+      text-decoration: none;
+      border-radius: var(--cc-radius-sm);
+    }
+    .cc-skip-link:focus,
+    .cc-skip-link:focus-visible {
+      top: 12px;
+    }
+
+    .cc-tabular { font-variant-numeric: tabular-nums; }
+    .cc-kicker { color: var(--cc-teal); font: 700 12px/1.25 var(--cc-font-body); letter-spacing: .045em; text-transform: uppercase; }
+    .cc-subtitle { color: var(--cc-blue-dark); font: italic 400 18px/1.35 var(--cc-font-display); }
+    .cc-meta { color: var(--cc-muted); font: 400 13px/1.35 var(--cc-font-body); font-variant-numeric: tabular-nums; }
+    .cc-rule { height: 1px; width: 100%; background: var(--cc-blue); border: 0; margin: 8px 0; }
+
+    /* Interactive UX State Switcher Bar */
+    .ux-state-switcher {
+      max-width: 860px;
+      margin: 0 auto 16px;
+      background: var(--cc-navy);
+      color: var(--cc-white);
+      border: 1px solid var(--cc-line);
+      padding: 12px 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+      font-family: var(--cc-font-ui);
+    }
+    .ux-state-switcher__label {
+      font: 700 12px/1.2 var(--cc-font-ui);
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: #DCE5EE;
+    }
+    .ux-state-group {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    .ux-state-btn {
+      min-height: 36px;
+      padding: 0 10px;
+      border: 1px solid #6E7E91;
+      border-radius: 2px;
+      background: rgba(255, 255, 255, 0.08);
+      color: var(--cc-white);
+      font: 700 12px/1 var(--cc-font-ui);
+      cursor: pointer;
+    }
+    .ux-state-btn[aria-pressed="true"] {
+      background: var(--cc-teal);
+      border-color: var(--cc-white);
+    }
+
+    /* Two-column comparison stage */
+    .comparison-header {
+      max-width: 860px;
+      margin: 0 auto 20px;
+      background: var(--cc-white);
+      border: 1px solid var(--cc-line);
+      border-top: 3px solid var(--cc-blue);
+      padding: 16px 20px;
+    }
+    .comparison-grid {
+      max-width: 860px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 390px 390px;
+      justify-content: space-between;
+      gap: 32px;
+      align-items: start;
+    }
+
+    /* Realistic <=390px Mobile Phone Frame */
+    .phone-frame {
+      width: 390px;
+      background: var(--cc-white);
+      border: 2px solid var(--cc-line);
+      border-radius: 3px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+    .phone-status-bar {
+      background: var(--cc-navy);
+      color: var(--cc-white);
+      padding: 6px 14px;
+      font: 700 12px/1.2 var(--cc-font-ui);
+      font-variant-numeric: tabular-nums;
+      display: flex;
+      justify-content: space-between;
+    }
+    .mobile-top-bar {
+      background: var(--cc-white);
+      border-top: 2px solid var(--cc-blue);
+      border-bottom: 1px solid var(--cc-line);
+      padding: 8px 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+    .mobile-page {
+      padding: 24px 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    /* Status badges */
+    .cc-status { display: inline-flex; align-items: center; gap: 5px; padding: 4px 8px; border-radius: 2px; font: 700 12px/1.2 var(--cc-font-ui); font-variant-numeric: tabular-nums; border: 1px solid transparent; }
+    .cc-status--success { color: #126E6A; background: var(--cc-success-bg); border-color: #C8E0DC; }
+    .cc-status--warning { color: #795014; background: var(--cc-warning-bg); border-color: #E8D9BA; }
+    .cc-status--danger { color: #853838; background: var(--cc-danger-bg); border-color: #EBCFCF; }
+    .cc-status--info { color: var(--cc-blue-dark); background: var(--cc-info-bg); border-color: #D4E0EF; }
+    .cc-status--neutral { color: var(--cc-muted); background: #F1F3F5; border-color: #DCE1E6; }
+
+    /* Buttons (40px min touch target) */
+    .cc-button { min-height: 40px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 0 14px; border: 1px solid transparent; border-radius: 2px; font: 700 14px/1 var(--cc-font-ui); cursor: pointer; text-decoration: none; }
+    .cc-button--primary { background: var(--cc-navy-2); border-color: var(--cc-navy-2); color: var(--cc-white); }
+    .cc-button--secondary { background: var(--cc-white); border-color: var(--cc-navy-2); color: var(--cc-navy-2); }
+    .cc-button--teal { background: var(--cc-teal); border-color: var(--cc-teal); color: var(--cc-white); }
+    .cc-button--teal:hover { background: var(--cc-teal-hover); border-color: var(--cc-teal-hover); }
+    .cc-button--danger { background: var(--cc-danger); border-color: var(--cc-danger); color: var(--cc-white); }
+    .cc-button--text { background: transparent; border-color: transparent; color: var(--cc-blue-dark); padding-inline: 8px; }
+    .cc-button--small { min-height: 36px; padding-inline: 12px; font-size: 12px; }
+    .cc-button[aria-disabled="true"] { opacity: 0.55; cursor: not-allowed; }
+
+    /* Form controls (16px on mobile to prevent iOS Safari viewport auto-zoom; 3.95:1 border contrast) */
+    .cc-field { display: grid; gap: 5px; font-family: var(--cc-font-ui); }
+    .cc-label { color: var(--cc-navy-2); font: 700 14px/1.3 var(--cc-font-ui); }
+    .cc-input, .cc-select, .cc-textarea {
+      width: 100%;
+      min-height: 40px;
+      border: 1px solid var(--cc-border-control);
+      border-radius: 2px;
+      background: var(--cc-white);
+      color: var(--cc-navy);
+      padding: 8px 10px;
+      font: 400 16px/1.35 var(--cc-font-ui);
+    }
+    .cc-dropdown { position: relative; }
+    .cc-dropdown__trigger {
+      width: 100%;
+      min-height: 40px;
+      border: 1px solid var(--cc-border-control);
+      border-radius: 2px;
+      background: var(--cc-white);
+      color: var(--cc-navy);
+      padding: 8px 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      text-align: left;
+      cursor: pointer;
+    }
+    .cc-dropdown__menu {
+      position: absolute;
+      top: calc(100% + 4px);
+      left: 0;
+      right: 0;
+      z-index: 40;
+      margin: 0;
+      padding: 6px;
+      list-style: none;
+      background: var(--cc-white);
+      border: 1px solid var(--cc-line);
+      border-top: 2px solid var(--cc-blue);
+    }
+    .cc-dropdown__option {
+      padding: 8px 10px;
+      min-height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+      font: 400 14px/1.3 var(--cc-font-ui);
+    }
+    .cc-dropdown__option[aria-selected="true"] {
+      background: var(--cc-info-bg);
+      color: var(--cc-blue-dark);
+      font-weight: 700;
+    }
+
+    /* 18. checklist-runner */
+    .checklist-section-header {
+      background: var(--cc-navy);
+      color: var(--cc-white);
+      padding: 10px 12px;
+      font: 700 14px/1.25 var(--cc-font-body);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .checklist-item {
+      border: 1px solid var(--cc-border);
+      border-top: 0;
+      padding: 14px 12px;
+      background: var(--cc-white);
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .checklist-item--alt { background: var(--cc-row); }
+    .checklist-item--fail { border: 1px solid #EBCFCF; background: #FDF9F9; }
+    .checklist-question {
+      font: 700 15px/1.35 var(--cc-font-body);
+      color: var(--cc-navy);
+    }
+    .segmented-group {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
+    }
+    .seg-btn {
+      min-height: 40px;
+      border: 1px solid var(--cc-border-control);
+      border-radius: 2px;
+      background: var(--cc-white);
+      color: var(--cc-navy-2);
+      font: 700 14px/1 var(--cc-font-ui);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+    }
+    .seg-btn--pass-active {
+      background: var(--cc-success-bg);
+      color: #126E6A;
+      border-color: #126E6A;
+      border-width: 2px;
+    }
+    .seg-btn--fail-active {
+      background: var(--cc-danger-bg);
+      color: #853838;
+      border-color: #A34545;
+      border-width: 2px;
+    }
+    .seg-btn--na-active {
+      background: #F1F3F5;
+      color: var(--cc-muted);
+      border-color: var(--cc-border-control);
+      border-width: 2px;
+    }
+
+    /* 16. evidence-uploader */
+    .cc-evidence-uploader {
+      background: var(--cc-row);
+      border: 1px dashed var(--cc-border-control);
+      border-radius: 2px;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .progress-track {
+      height: 4px;
+      width: 100%;
+      background: #DCE1E6;
+      overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%;
+      width: 100%;
+      background: var(--cc-teal);
+    }
+    .interrupted-retry-bar {
+      background: var(--cc-warning-bg);
+      border: 1px solid #E8D9BA;
+      color: #795014;
+      padding: 8px 10px;
+      border-radius: 2px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      font: 400 12px/1.35 var(--cc-font-body);
+    }
+
+    /* Inline Raise Maintenance Request drawer */
+    .inline-mr-drawer {
+      border: 1px solid var(--cc-line);
+      border-top: 3px solid var(--cc-blue);
+      background: var(--cc-white);
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    /* 4. recommendation-callout */
+    .cc-callout {
+      background: var(--cc-teal-wash);
+      padding: 14px 14px;
+      display: grid;
+      gap: 6px;
+      border-radius: 0;
+    }
+    .cc-callout__label { color: var(--cc-teal); font: 700 12px/1.25 var(--cc-font-body); text-transform: uppercase; letter-spacing: .035em; }
+    .cc-callout__body { color: var(--cc-navy); font: 400 14px/1.4 var(--cc-font-body); }
+
+    /* Error / Offline / Permission Banners */
+    .cc-state-banner {
+      padding: 12px 14px;
+      border-radius: 2px;
+      display: grid;
+      gap: 6px;
+      font: 400 13px/1.4 var(--cc-font-body);
+    }
+    .cc-state-banner--danger { background: var(--cc-danger-bg); border: 1px solid #EBCFCF; color: #853838; }
+    .cc-state-banner--warning { background: var(--cc-warning-bg); border: 1px solid #E8D9BA; color: #795014; }
+    .cc-state-banner--neutral { background: #F1F3F5; border: 1px solid #DCE1E6; color: var(--cc-navy); }
+
+    /* Skeleton loading blocks */
+    .cc-skeleton-block {
+      background: #E4EAF0;
+      border: 1px solid var(--cc-border);
+      border-radius: 2px;
+      height: 52px;
+    }
+
+    /* Modal Dialog */
+    .cc-modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(20, 36, 58, 0.52);
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 18px;
+    }
+    .cc-modal-backdrop[hidden] { display: none; }
+    .cc-modal {
+      width: 100%;
+      max-width: 390px;
+      background: var(--cc-white);
+      border: 1px solid var(--cc-line);
+      border-top: 3px solid var(--cc-blue);
+      padding: 20px;
+      display: grid;
+      gap: 14px;
+    }
+
+    /* 2. mobile-quick-task-bar (12px typography floor per DESIGN.md) */
+    .mobile-quick-task-bar {
+      height: 56px;
+      background: var(--cc-white);
+      border-top: 1px solid var(--cc-line);
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+    }
+    .quick-task-cell {
+      min-height: 40px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font: 700 var(--cc-text-xs)/1.15 var(--cc-font-ui);
+      color: var(--cc-navy-2);
+      text-decoration: none;
+      border-top: 2px solid transparent;
+      text-align: center;
+      padding: 4px;
+    }
+    .quick-task-cell.is-active {
+      background: var(--cc-info-bg);
+      color: var(--cc-blue-dark);
+      border-top-color: var(--cc-blue);
+    }
+
+    @media (max-width: 860px) {
+      .comparison-grid {
+        grid-template-columns: 1fr;
+        justify-items: center;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+      }
+    }
+  </style>
+</head>
+<body class="cc-theme">
+
+  <a href="#main-content" class="cc-skip-link">Skip to main content</a>
+
+  <!-- Interactive UX State Switcher -->
+  <aside class="ux-state-switcher" aria-label="Interactive UX state switcher">
+    <span class="ux-state-switcher__label">Interactive UX state matrix (`UJ-2`):</span>
+    <div class="ux-state-group" role="group" aria-label="Select screen state">
+      <button type="button" class="ux-state-btn" data-state="default" aria-pressed="true">1. Default (Active + Locked split)</button>
+      <button type="button" class="ux-state-btn" data-state="loading" aria-pressed="false">2. Loading (Skeleton)</button>
+      <button type="button" class="ux-state-btn" data-state="error" aria-pressed="false">3. Error (422 unanswered item)</button>
+      <button type="button" class="ux-state-btn" data-state="offline" aria-pressed="false">4. Offline (Upload retry)</button>
+      <button type="button" class="ux-state-btn" data-state="permission" aria-pressed="false">5. Permission (Technician read-only)</button>
+    </div>
+  </aside>
+
+  <header class="comparison-header">
+    <div class="cc-kicker">Key screen UJ-2 · Protagonist: Amara Bello (Site supervisor · Mobile field browser &lt;=390px)</div>
+    <h1 style="font: 700 22px/1.2 var(--cc-font-display); color: var(--cc-navy-2); margin: 4px 0;">Mobile inspection runner (`Inspections/InspectionRunner.tsx`)</h1>
+    <p class="cc-meta" style="color: var(--cc-navy);">
+      <strong>Left column:</strong> Active checklist runner with 40px segmented Pass/Fail/N/A radio touch buttons, draft sync badge, WebP client-side compressed evidence upload, and inline <em>Raise maintenance request</em> drawer.
+      <strong>Right column:</strong> Load-bearing alternate state: <em>Immutable locked approved record</em> with read-only findings and <em>Create corrected version (`supersedes_id`)</em> action.
+    </p>
+  </header>
+
+  <main id="main-content" class="comparison-grid" tabindex="-1">
+
+    <!-- ======================================================================
+         LEFT COLUMN: ACTIVE MOBILE INSPECTION RUNNER (IN PROGRESS)
+         ====================================================================== -->
+    <section class="phone-frame" aria-label="Active mobile inspection runner">
+      <div class="phone-status-bar">
+        <span>14:12 WAT · MTN 4G</span>
+        <span>Android field browser · 390px</span>
+      </div>
+
+      <!-- Compact Mobile Header -->
+      <header class="mobile-top-bar">
+        <div>
+          <div style="font: 700 var(--cc-text-xs)/1.1 var(--cc-font-ui); color: var(--cc-muted); text-transform: uppercase;">Client scope</div>
+          <div style="font: 700 13px/1.2 var(--cc-font-ui); color: var(--cc-navy-2);">Lagoon View Estates Ltd</div>
+        </div>
+        <button type="button" class="cc-button cc-button--secondary" style="min-height: 40px; padding: 0 12px;">Menu</button>
+      </header>
+
+      <!-- STATE: LOADING SKELETON -->
+      <div id="state-loading-panel" class="mobile-page" hidden aria-busy="true" aria-label="Loading checklist items">
+        <div class="cc-kicker">Loading inspection template v2...</div>
+        <div class="cc-skeleton-block" style="height: 64px;"></div>
+        <div class="cc-skeleton-block" style="height: 110px;"></div>
+        <div class="cc-skeleton-block" style="height: 110px;"></div>
+        <div class="cc-skeleton-block" style="height: 160px;"></div>
+      </div>
+
+      <!-- STATE: ACTIVE / ERROR / OFFLINE / PERMISSION VIEW -->
+      <div id="state-active-panel" class="mobile-page">
+
+        <!-- State 3: Error 422 Unanswered Question Banner -->
+        <div id="banner-error-422" class="cc-state-banner cc-state-banner--danger" role="alert" hidden>
+          <div style="font-weight: 700; font-family: var(--cc-font-ui);">Cannot sign off inspection yet (HTTP 422)</div>
+          <div>Question 3 ("Diesel day-tank fuel line and water separator") requires a Pass, Fail, or N/A response before supervisor sign-off.</div>
+        </div>
+
+        <!-- State 4: Offline / Interrupted Upload Retry Banner -->
+        <div id="banner-offline-retry" class="cc-state-banner cc-state-banner--warning" role="status" aria-live="polite" hidden>
+          <div style="font-weight: 700; font-family: var(--cc-font-ui);">Connection lost during upload</div>
+          <div>Your compressed photo (`frayed-belt-lve-gen-01.webp`, 248 KB) and observation notes are preserved in browser memory. Tap <strong>Retry upload</strong> when 3G/4G signal returns.</div>
+        </div>
+
+        <!-- State 5: Permission (Technician Read-Only) Banner -->
+        <div id="banner-permission-tech" class="cc-state-banner cc-state-banner--neutral" role="status" hidden>
+          <div style="font-weight: 700; font-family: var(--cc-font-ui);">Technician view (Sign-off restricted)</div>
+          <div>You can record checklist responses and upload field photos. Final inspection approval and sign-off requires a <strong>Site Supervisor</strong> or <strong>Operations Manager</strong> (`FR-11`).</div>
+        </div>
+
+        <!-- 3. page-header -->
+        <div>
+          <div class="cc-kicker">Inspection INSP-2026-089 · Template v2</div>
+          <h2 style="font: 700 22px/1.2 var(--cc-font-display); color: var(--cc-navy-2); margin: 4px 0;">Generator and plant room checklist</h2>
+          <hr class="cc-rule" />
+          <div style="display: flex; flex-wrap: wrap; gap: 6px; align-items: center;">
+            <span id="progress-badge" class="cc-status cc-status--info cc-tabular">In progress (5/5 answered)</span>
+            <span id="draft-sync-badge" class="cc-status cc-status--success cc-tabular" role="status" aria-live="polite">All 5 responses saved</span>
+            <span class="cc-meta">Site: LVE-VI-01 · Amara Bello</span>
+          </div>
+        </div>
+
+        <!-- 18. checklist-runner -->
+        <div>
+          <div class="checklist-section-header">
+            <span>Section A · 500kVA standby generator (LVE-GEN-01)</span>
+            <span style="font: 700 var(--cc-text-xs)/1 var(--cc-font-ui);">v2 pinned</span>
+          </div>
+
+          <!-- Item 1: Pass -->
+          <div class="checklist-item">
+            <div id="q1-text" class="checklist-question">1. Engine coolant level and radiator cap seal integrity</div>
+            <div class="segmented-group" role="radiogroup" aria-labelledby="q1-text">
+              <button type="button" class="seg-btn seg-btn--pass-active" role="radio" aria-checked="true" data-q="1" data-val="pass">Pass</button>
+              <button type="button" class="seg-btn" role="radio" aria-checked="false" data-q="1" data-val="fail">Fail</button>
+              <button type="button" class="seg-btn" role="radio" aria-checked="false" data-q="1" data-val="na">N/A</button>
+            </div>
+            <div class="cc-meta">Note: Coolant at full mark; pressure cap clean.</div>
+          </div>
+
+          <!-- Item 2: Pass -->
+          <div class="checklist-item checklist-item--alt">
+            <div id="q2-text" class="checklist-question">2. Starter battery bank voltage and terminal corrosion check</div>
+            <div class="segmented-group" role="radiogroup" aria-labelledby="q2-text">
+              <button type="button" class="seg-btn seg-btn--pass-active" role="radio" aria-checked="true" data-q="2" data-val="pass">Pass</button>
+              <button type="button" class="seg-btn" role="radio" aria-checked="false" data-q="2" data-val="fail">Fail</button>
+              <button type="button" class="seg-btn" role="radio" aria-checked="false" data-q="2" data-val="na">N/A</button>
+            </div>
+            <div class="cc-meta cc-tabular">Note: Float voltage 27.4V DC; engine hours: 4,182 hrs.</div>
+          </div>
+
+          <!-- Item 5: Fail + Photo Evidence + Inline Raise Maintenance Request -->
+          <div class="checklist-item checklist-item--fail">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 8px;">
+              <div id="q5-text" class="checklist-question">5. Alternator drive belt tension and surface wear check</div>
+              <span class="cc-status cc-status--danger">Fault recorded</span>
+            </div>
+
+            <div class="segmented-group" role="radiogroup" aria-labelledby="q5-text">
+              <button type="button" class="seg-btn" role="radio" aria-checked="false" data-q="5" data-val="pass">Pass</button>
+              <button type="button" class="seg-btn seg-btn--fail-active" role="radio" aria-checked="true" data-q="5" data-val="fail">Fail</button>
+              <button type="button" class="seg-btn" role="radio" aria-checked="false" data-q="5" data-val="na">N/A</button>
+            </div>
+
+            <div class="cc-field">
+              <label class="cc-label" for="asset-cond-q5">Asset condition (`LVE-GEN-01`)</label>
+              <select id="asset-cond-q5" class="cc-select">
+                <option value="fair" selected>Fair: Needs attention (updated from Good)</option>
+                <option value="poor">Poor: Critical fault</option>
+              </select>
+            </div>
+
+            <div class="cc-field">
+              <label class="cc-label" for="notes-q5">Supervisor observation note</label>
+              <input id="notes-q5" class="cc-input" type="text" value="Visible edge fraying on alternator v-belt; replace before weekend load changeover." />
+            </div>
+
+            <!-- 16. evidence-uploader -->
+            <div class="cc-evidence-uploader" aria-live="polite">
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span style="font: 700 12px/1.2 var(--cc-font-ui); color: var(--cc-navy-2);">Attached evidence (1 photo)</span>
+                <span id="upload-status-chip" class="cc-status cc-status--success cc-tabular">WebP compressed · 248 KB</span>
+              </div>
+              <div class="progress-track" role="progressbar" aria-label="Evidence upload progress" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100">
+                <div id="upload-progress-bar" class="progress-fill"></div>
+              </div>
+              <div class="cc-meta" style="font-size: 12px;">
+                <code>frayed-belt-lve-gen-01.webp</code> (1920x1440) · Captured 03 Nov 2026, 14:09 WAT · GPS 6.4284° N, 3.4222° E (±9 m)
+              </div>
+              <!-- Interrupted upload recovery bar (State 8 resilience pattern) -->
+              <div id="inline-retry-row" class="interrupted-retry-bar" role="status" aria-live="polite">
+                <span><strong>Upload recovery ready:</strong> If signal drops mid-upload, compressed WebP and notes stay in memory.</span>
+                <button type="button" id="btn-retry-upload" class="cc-button cc-button--secondary" style="min-height: 40px; padding: 0 10px; font-size: 12px;">Retry upload</button>
+              </div>
+              <button type="button" class="cc-button cc-button--secondary" style="width: 100%;">Capture or select additional photo</button>
+            </div>
+
+            <!-- Inline Raise Maintenance Request / Work Order Conversion Drawer -->
+            <div class="inline-mr-drawer" role="region" aria-label="Inline raise maintenance request drawer">
+              <div class="cc-kicker">Inline fault escalation · FR-12 and FR-13</div>
+              <div style="font: 700 15px/1.25 var(--cc-font-display); color: var(--cc-navy-2);">Raise maintenance request and assign work order</div>
+
+              <div class="cc-field">
+                <label class="cc-label" for="mr-title">Work order summary</label>
+                <input id="mr-title" class="cc-input" type="text" value="Replace frayed alternator drive belt on 500kVA Generator LVE-GEN-01" />
+              </div>
+
+              <div class="cc-field">
+                <label class="cc-label" for="mr-priority">Priority (Tier-1 native select)</label>
+                <select id="mr-priority" class="cc-select">
+                  <option value="high" selected>High: Complete within 24 hours</option>
+                  <option value="medium">Medium: Routine</option>
+                </select>
+              </div>
+
+              <div class="cc-field cc-dropdown">
+                <label id="assign-tech-label" class="cc-label" for="assign-tech-trigger">Assign technician (Tier-2 editorial dropdown)</label>
+                <button
+                  type="button"
+                  id="assign-tech-trigger"
+                  class="cc-dropdown__trigger"
+                  role="combobox"
+                  aria-haspopup="listbox"
+                  aria-expanded="false"
+                  aria-controls="assign-tech-listbox"
+                  aria-labelledby="assign-tech-label assign-tech-value"
+                >
+                  <div>
+                    <div id="assign-tech-value" style="font: 700 14px/1.2 var(--cc-font-ui); color: var(--cc-navy-2);">Tunde Adeyemi · Mechanical technician</div>
+                    <div class="cc-meta" style="font-size: 12px;">Scoped to Lagoon View Estates · 1 active work order</div>
+                  </div>
+                  <span class="cc-status cc-status--info">Selected</span>
+                </button>
+                <ul id="assign-tech-listbox" class="cc-dropdown__menu" role="listbox" aria-labelledby="assign-tech-label" hidden>
+                  <li class="cc-dropdown__option" role="option" aria-selected="true" data-tech="Tunde Adeyemi · Mechanical technician">
+                    <span>Tunde Adeyemi · Mechanical technician</span>
+                    <span class="cc-status cc-status--info">1 active WO</span>
+                  </li>
+                  <li class="cc-dropdown__option" role="option" aria-selected="false" data-tech="Musa Ibrahim · Lead HVAC supervisor">
+                    <span>Musa Ibrahim · Lead HVAC supervisor</span>
+                    <span class="cc-status cc-status--neutral">0 active WOs</span>
+                  </li>
+                </ul>
+              </div>
+
+              <!-- Demoted to secondary button so the screen has a single primary CTA (Approve & sign off inspection) -->
+              <button type="button" id="btn-create-wo" class="cc-button cc-button--secondary" style="width: 100%;">Create and assign work order (WO-2026-0142)</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Single Primary Supervisor Sign-off CTA on the screen -->
+        <div style="display: flex; flex-direction: column; gap: 8px; padding-top: 6px; border-top: 1px solid var(--cc-border);">
+          <button type="button" id="btn-open-signoff-modal" class="cc-button cc-button--teal" style="width: 100%;">Approve and sign off inspection</button>
+          <span class="cc-meta" style="text-align: center; font-size: 12px;">Signing off permanently locks responses and photo attachments (AD-10).</span>
+        </div>
+      </div>
+
+      <!-- 2. mobile-quick-task-bar -->
+      <nav class="mobile-quick-task-bar" aria-label="Field quick task bar">
+        <a href="#my-inspections" class="quick-task-cell is-active">My Inspections</a>
+        <a href="#my-work-orders" class="quick-task-cell">My Work Orders</a>
+        <a href="#asset-lookup" class="quick-task-cell">Asset Lookup</a>
+        <a href="#quick-evidence" class="quick-task-cell">Quick Evidence</a>
+      </nav>
+    </section>
+
+    <!-- ======================================================================
+         RIGHT COLUMN: ALTERNATE STATE — APPROVED & IMMUTABLE RECORD + SUPERSEDE
+         ====================================================================== -->
+    <section class="phone-frame" aria-label="Approved and immutable inspection state">
+      <div class="phone-status-bar">
+        <span>14:25 WAT · MTN 4G</span>
+        <span>State 11 · Immutable record</span>
+      </div>
+
+      <!-- Compact Mobile Header -->
+      <header class="mobile-top-bar">
+        <div>
+          <div style="font: 700 var(--cc-text-xs)/1.1 var(--cc-font-ui); color: var(--cc-muted); text-transform: uppercase;">Client scope</div>
+          <div style="font: 700 13px/1.2 var(--cc-font-ui); color: var(--cc-navy-2);">Lagoon View Estates Ltd</div>
+        </div>
+        <button type="button" class="cc-button cc-button--secondary" style="min-height: 40px; padding: 0 12px;">Menu</button>
+      </header>
+
+      <div class="mobile-page">
+        <!-- 3. page-header -->
+        <div>
+          <div class="cc-kicker">Inspection INSP-2026-089 · Template v2 (locked)</div>
+          <h2 style="font: 700 22px/1.2 var(--cc-font-display); color: var(--cc-navy-2); margin: 4px 0;">Generator and plant room checklist</h2>
+          <hr class="cc-rule" />
+          <div style="display: flex; flex-wrap: wrap; gap: 6px; align-items: center;">
+            <span class="cc-status cc-status--success">Approved</span>
+            <span class="cc-status cc-status--neutral">Immutable record · Locked</span>
+          </div>
+        </div>
+
+        <!-- 4. recommendation-callout (Immutability & Supersede Contract — AD-10) -->
+        <div class="cc-callout" role="status" aria-live="polite">
+          <div class="cc-callout__label">Immutable audit record · Supervisor sign-off</div>
+          <div class="cc-callout__body">
+            Approved on <strong>03 Nov 2026, 14:20 WAT</strong> by <strong>Amara Bello</strong> (Site Supervisor). This record and its photo evidence are immutable. To amend a finding, create a corrected version linked to this inspection.
+          </div>
+          <div style="margin-top: 6px;">
+            <button type="button" class="cc-button cc-button--secondary" style="width: 100%; background: var(--cc-white);">
+              Create corrected version (`supersedes_id`)
+            </button>
+          </div>
+        </div>
+
+        <!-- Read-only Checklist Responses in Static Georgia Typography -->
+        <div>
+          <div class="checklist-section-header">
+            <span>Section A · Recorded findings (read-only)</span>
+            <span class="cc-tabular" style="font: 700 var(--cc-text-xs)/1 var(--cc-font-ui);">5 / 5 locked</span>
+          </div>
+
+          <div class="checklist-item">
+            <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px;">
+              <div class="checklist-question">1. Engine coolant level and radiator cap seal</div>
+              <span class="cc-status cc-status--success">Pass</span>
+            </div>
+            <div class="cc-meta" style="color: var(--cc-navy);">
+              <strong>Recorded note:</strong> Coolant at full mark; pressure cap clean.
+            </div>
+          </div>
+
+          <div class="checklist-item checklist-item--alt">
+            <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px;">
+              <div class="checklist-question">2. Starter battery bank voltage and terminals</div>
+              <span class="cc-status cc-status--success">Pass</span>
+            </div>
+            <div class="cc-meta cc-tabular" style="color: var(--cc-navy);">
+              <strong>Recorded note:</strong> Float voltage 27.4V DC; engine hours: 4,182 hrs.
+            </div>
+          </div>
+
+          <div class="checklist-item">
+            <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px;">
+              <div class="checklist-question">3. Diesel day-tank fuel line and water separator</div>
+              <span class="cc-status cc-status--success">Pass</span>
+            </div>
+            <div class="cc-meta" style="color: var(--cc-navy);">
+              <strong>Recorded note:</strong> No weeping at braided hose joints; bowl drained clear.
+            </div>
+          </div>
+
+          <div class="checklist-item checklist-item--alt">
+            <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px;">
+              <div class="checklist-question">4. 800A ABB auto-transfer switch (`LVE-ATS-01`)</div>
+              <span class="cc-status cc-status--success">Pass</span>
+            </div>
+            <div class="cc-meta" style="color: var(--cc-navy);">
+              <strong>Recorded note:</strong> Auto mode active; phase sensing relay normal.
+            </div>
+          </div>
+
+          <div class="checklist-item checklist-item--fail">
+            <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px;">
+              <div class="checklist-question">5. Alternator drive belt tension and wear</div>
+              <span class="cc-status cc-status--danger">Fail</span>
+            </div>
+            <div class="cc-meta" style="color: var(--cc-navy);">
+              <strong>Asset condition updated:</strong> <code>LVE-GEN-01</code> to Fair (Needs attention)<br/>
+              <strong>Recorded note:</strong> Visible edge fraying on alternator v-belt; replace before weekend load changeover.
+            </div>
+
+            <!-- 17. evidence-gallery (Locked attachment card, delete button omitted per AD-11) -->
+            <div style="border: 1px solid var(--cc-border); background: var(--cc-white); padding: 10px; border-radius: 2px; display: flex; flex-direction: column; gap: 6px;">
+              <div style="height: 84px; background: #DCE5EE; border: 1px solid var(--cc-border); display: flex; align-items: center; justify-content: center; font: 700 12px/1.2 var(--cc-font-ui); color: var(--cc-navy-2);">
+                [Signed R2 thumbnail · frayed-belt-lve-gen-01.webp]
+              </div>
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span class="cc-meta" style="font-size: 12px;">03 Nov 2026, 14:09 WAT · GPS ±9 m</span>
+                <span class="cc-status cc-status--neutral">Evidence locked</span>
+              </div>
+            </div>
+
+            <!-- Linked Maintenance Request & Work Order provenance badge -->
+            <div style="border-top: 1px solid var(--cc-border); padding-top: 8px; display: flex; justify-content: space-between; align-items: center; gap: 8px;">
+              <div>
+                <div style="font: 700 12px/1.2 var(--cc-font-ui); color: var(--cc-navy-2);">Linked work order: WO-2026-0142</div>
+                <div class="cc-meta" style="font-size: 12px;">Assigned to Tunde Adeyemi · Status: Assigned</div>
+              </div>
+              <a href="#wo-0142" class="cc-button cc-button--secondary" style="min-height: 40px; padding: 0 12px;">View WO</a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 2. mobile-quick-task-bar -->
+      <nav class="mobile-quick-task-bar" aria-label="Field quick task bar">
+        <a href="#my-inspections" class="quick-task-cell is-active">My Inspections</a>
+        <a href="#my-work-orders" class="quick-task-cell">My Work Orders</a>
+        <a href="#asset-lookup" class="quick-task-cell">Asset Lookup</a>
+        <a href="#quick-evidence" class="quick-task-cell">Quick Evidence</a>
+      </nav>
+    </section>
+
+  </main>
+
+  <!-- Supervisor Sign-Off Confirmation Modal Dialog -->
+  <div id="signoff-modal-backdrop" class="cc-modal-backdrop" hidden>
+    <div class="cc-modal" role="dialog" aria-modal="true" aria-labelledby="signoff-modal-title" aria-describedby="signoff-modal-desc">
+      <div class="cc-kicker">Immutable audit commitment · AD-10</div>
+      <h2 id="signoff-modal-title" style="font: 700 18px/1.25 var(--cc-font-display); color: var(--cc-navy-2); margin: 0;">Approve and lock inspection INSP-2026-089?</h2>
+      <p id="signoff-modal-desc" class="cc-meta" style="color: var(--cc-navy); margin: 0;">
+        Signing off permanently locks all 5 checklist responses and attached photo evidence under <strong>Amara Bello</strong> (`03 Nov 2026, WAT`). Locked inspections cannot be edited or deleted; future changes require creating a superseding version (`supersedes_id`).
+      </p>
+      <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 6px;">
+        <button type="button" id="btn-cancel-signoff" class="cc-button cc-button--secondary">Cancel</button>
+        <button type="button" id="btn-confirm-signoff" class="cc-button cc-button--teal">Approve and lock record</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      // UX State Switcher
+      const stateBtns = document.querySelectorAll('.ux-state-btn');
+      const loadingPanel = document.getElementById('state-loading-panel');
+      const activePanel = document.getElementById('state-active-panel');
+      const bannerError = document.getElementById('banner-error-422');
+      const bannerOffline = document.getElementById('banner-offline-retry');
+      const bannerPermission = document.getElementById('banner-permission-tech');
+      const signoffBtn = document.getElementById('btn-open-signoff-modal');
+      const progressBadge = document.getElementById('progress-badge');
+      const syncBadge = document.getElementById('draft-sync-badge');
+
+      stateBtns.forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          const state = btn.getAttribute('data-state');
+          stateBtns.forEach(function (b) { b.setAttribute('aria-pressed', String(b === btn)); });
+
+          loadingPanel.hidden = state !== 'loading';
+          activePanel.hidden = state === 'loading';
+          bannerError.hidden = state !== 'error';
+          bannerOffline.hidden = state !== 'offline';
+          bannerPermission.hidden = state !== 'permission';
+
+          if (state === 'error') {
+            progressBadge.textContent = 'In progress (4/5 answered)';
+            syncBadge.textContent = '1 item unanswered';
+            syncBadge.className = 'cc-status cc-status--danger cc-tabular';
+          } else if (state === 'offline') {
+            progressBadge.textContent = 'In progress (5/5 answered)';
+            syncBadge.textContent = '1 photo awaiting retry';
+            syncBadge.className = 'cc-status cc-status--warning cc-tabular';
+          } else {
+            progressBadge.textContent = 'In progress (5/5 answered)';
+            syncBadge.textContent = 'All 5 responses saved';
+            syncBadge.className = 'cc-status cc-status--success cc-tabular';
+          }
+
+          if (state === 'permission') {
+            signoffBtn.setAttribute('aria-disabled', 'true');
+            signoffBtn.textContent = 'Supervisor sign-off required';
+          } else {
+            signoffBtn.removeAttribute('aria-disabled');
+            signoffBtn.textContent = 'Approve and sign off inspection';
+          }
+        });
+      });
+
+      // Segmented Pass/Fail/N/A Radio Groups
+      document.querySelectorAll('.segmented-group').forEach(function (group) {
+        const radios = group.querySelectorAll('[role="radio"]');
+        radios.forEach(function (radio) {
+          radio.addEventListener('click', function () {
+            radios.forEach(function (r) {
+              r.setAttribute('aria-checked', 'false');
+              r.className = 'seg-btn';
+            });
+            radio.setAttribute('aria-checked', 'true');
+            const val = radio.getAttribute('data-val');
+            if (val === 'pass') radio.classList.add('seg-btn--pass-active');
+            if (val === 'fail') radio.classList.add('seg-btn--fail-active');
+            if (val === 'na') radio.classList.add('seg-btn--na-active');
+            syncBadge.textContent = 'Draft saved just now';
+          });
+        });
+      });
+
+      // Tier-2 Technician Editorial Combobox
+      const techTrigger = document.getElementById('assign-tech-trigger');
+      const techListbox = document.getElementById('assign-tech-listbox');
+      const techValue = document.getElementById('assign-tech-value');
+      if (techTrigger && techListbox) {
+        techTrigger.addEventListener('click', function () {
+          const expanded = techTrigger.getAttribute('aria-expanded') === 'true';
+          techTrigger.setAttribute('aria-expanded', String(!expanded));
+          techListbox.hidden = expanded;
+        });
+        techListbox.querySelectorAll('[role="option"]').forEach(function (opt) {
+          opt.addEventListener('click', function () {
+            techListbox.querySelectorAll('[role="option"]').forEach(function (o) { o.setAttribute('aria-selected', 'false'); });
+            opt.setAttribute('aria-selected', 'true');
+            techValue.textContent = opt.getAttribute('data-tech');
+            techTrigger.setAttribute('aria-expanded', 'false');
+            techListbox.hidden = true;
+            techTrigger.focus();
+          });
+        });
+      }
+
+      // Sign-off Modal Dialog
+      const modalBackdrop = document.getElementById('signoff-modal-backdrop');
+      const cancelModalBtn = document.getElementById('btn-cancel-signoff');
+      const confirmModalBtn = document.getElementById('btn-confirm-signoff');
+      let lastTrigger = null;
+
+      signoffBtn.addEventListener('click', function () {
+        if (signoffBtn.getAttribute('aria-disabled') === 'true') return;
+        lastTrigger = signoffBtn;
+        modalBackdrop.hidden = false;
+        cancelModalBtn.focus();
+      });
+
+      function closeModal() {
+        modalBackdrop.hidden = true;
+        if (lastTrigger) lastTrigger.focus();
+      }
+      cancelModalBtn.addEventListener('click', closeModal);
+      confirmModalBtn.addEventListener('click', function () {
+        syncBadge.textContent = 'Approved and locked (14:20 WAT)';
+        closeModal();
+      });
+      document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape' && !modalBackdrop.hidden) closeModal();
+      });
+    })();
+  </script>
+</body>
+</html>
