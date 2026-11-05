@@ -23,7 +23,15 @@ declare(strict_types=1);
 |   php tools/create-test-database.php
 |
 | Environment:
-|   TEST_DB_HOST / TEST_DB_PORT   connection details (defaults: 127.0.0.1:5433)
+|   TEST_DB_HOST / TEST_DB_PORT   connection details; they fall back to
+|                                 DB_HOST / DB_PORT, then to 127.0.0.1:5433.
+|                                 Falling back to DB_* matters: this script is
+|                                 invoked both by a dedicated provisioning step
+|                                 and by `composer isolation` via @db:setup, and
+|                                 only some call sites set TEST_DB_*. Without the
+|                                 DB_* fallback the script targeted 5433 while the
+|                                 suite connected to DB_PORT, so provisioning and
+|                                 the tests could silently talk to different servers.
 |   PAI_OWNER_PASSWORD           password for pai_owner (default: local only)
 |   PAI_APP_PASSWORD             password for pai_app   (default: local only)
 |   ADMIN_DB_DATABASE            database to connect to   (default: postgres)
@@ -36,8 +44,8 @@ declare(strict_types=1);
 |
 */
 
-$host = getenv('TEST_DB_HOST') ?: '127.0.0.1';
-$port = getenv('TEST_DB_PORT') ?: '5433';
+$host = getenv('TEST_DB_HOST') ?: getenv('DB_HOST') ?: '127.0.0.1';
+$port = getenv('TEST_DB_PORT') ?: getenv('DB_PORT') ?: '5433';
 $adminDatabase = getenv('ADMIN_DB_DATABASE') ?: 'postgres';
 $adminUser = getenv('ADMIN_DB_USERNAME') ?: 'pai';
 $adminPassword = getenv('ADMIN_DB_PASSWORD') ?: 'secret';

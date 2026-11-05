@@ -103,13 +103,13 @@ jobs:
         # NOBYPASSRLS; only the pre-tenant lookup function owner bypasses RLS.
         # This must run before any migration, because the schema owner owns
         # tables and cannot create roles itself.
-        # TEST_DB_PORT and TEST_DB_HOST are taken from DB_PORT and DB_HOST so
-        # this script and the test connection can never disagree about which
-        # server they are talking to.
+        #
+        # Connection details come from the job's DB_* env. The script reads
+        # TEST_DB_* first and falls back to DB_*, so it reaches the same server
+        # whether it is invoked here or later by `composer ci:check` ->
+        # `@isolation` -> `@db:setup`, which has no TEST_DB_* of its own.
         run: php tools/create-test-database.php
         env:
-          TEST_DB_HOST: ${{ env.DB_HOST }}
-          TEST_DB_PORT: ${{ env.DB_PORT }}
           ADMIN_DB_DATABASE: ${{ env.DB_DATABASE }}
           ADMIN_DB_USERNAME: postgres
           ADMIN_DB_PASSWORD: postgres
