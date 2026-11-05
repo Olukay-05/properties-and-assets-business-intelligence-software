@@ -11,6 +11,12 @@ inputDocuments:
   - "_bmad-output/planning-artifacts/ux-designs/ux-business-intelligence-2026-11-03/specs/screen-spec-uj3-mobile-work-order-execution.md"
   - "_bmad-output/planning-artifacts/ux-designs/ux-business-intelligence-2026-11-03/specs/screen-spec-uj4-client-report-compiler.md"
   - "docs/design/design-context.md"
+  - "docs/security/AUTH.md"
+  - "docs/security/SECURITY.md"
+  - "docs/security/RLS-POLICIES.md"
+  - "docs/security/ENV.md"
+  - "docs/security/THREAT-MODEL.md"
+  - "docs/security/DATA-PROTECTION.md"
 ---
 
 # Property & Asset Intelligence - Epic Breakdown
@@ -71,7 +77,7 @@ From the Architecture Spine (ARCHITECTURE-SPINE.md, status: final):
 - AD-1: Unified service layer — adapters (Inertia/REST/jobs) are thin; all business rules in application services; a feature is incomplete without a direct service-layer test.
 - AD-2: Strict module ownership — one owning module per table (Tenancy & Identity, Registry, Inspections, Maintenance, Evidence, Reporting [read-only], Audit); cross-module writes via owner services; no separate `approvals` table.
 - AD-3: Tenant from session only — `TenantContext` singleton from membership; `organisation_id` barred from DTOs, `$fillable`, FormRequests, query params; stamped by a model `creating` hook.
-- AD-4: PostgreSQL RLS backstop — `ENABLE` + `FORCE RLS` on all 16 tenant tables; non-owner runtime role without `BYPASSRLS`; `SET LOCAL app.org_id` per transaction; Neon transaction-pooler compatible.
+- AD-4: PostgreSQL RLS backstop — `ENABLE` + `FORCE RLS` on all 17 tenant tables; non-owner runtime role without `BYPASSRLS`; `SET LOCAL app.org_id` per transaction; Neon transaction-pooler compatible.
 - AD-5: Client scoping — `memberships.client_scope` (null = unrestricted, else UUID array); denormalized `client_account_id` on all client-owned entities; global `ClientScope`.
 - AD-6: Universal ordered UUID primary/foreign keys (HasUuids); no integer IDs anywhere.
 - AD-7: Canonical `geometry(Point,4326)` + GiST; single mutator `LocationService::setLocation()`; distances only via `Geo::distanceMetres()`/`withinMetres()` with geography cast.
@@ -94,6 +100,14 @@ From the Architecture Spine (ARCHITECTURE-SPINE.md, status: final):
 - Environments: local docker-compose (postgis container + S3-compatible object storage), staging (Neon branch + R2 staging), production (Hetzner VPS + Neon paid PITR + R2 prod + isolated backup bucket).
 - Local object storage: a maintained, publicly available S3-compatible service (RustFS, pinned by digest) reached through Laravel's standard `s3` disk and configured exclusively by `AWS_*` environment variables; production uses Cloudflare R2 with no application change. MinIO was the original choice but its public images were withdrawn, and LocalStack was rejected because its current image is licence-gated and the last free tag does not enforce private buckets.
 - Greenfield starter: official Laravel React starter kit (Inertia + React + Tailwind) as the Epic 1 scaffold base.
+
+### Security & Data Protection Foundation Requirements (`docs/security/`)
+
+Every story touching authentication, permissions, tenant-scoped models/migrations, APIs, uploads, exports, or compliance must satisfy the corresponding acceptance criteria defined in `docs/security/`:
+- **`docs/security/AUTH.md` (Stories 1.2, 1.3, 1.4, 5.1):** Migrate `users.id` and `sessions.user_id` from integer to UUID (`HasUuids`, `AD-6`); disable/gate public uninvited self-registration (`Features::registration()`) so all users authenticate into an Organisation via an active `memberships` record; enforce 6-role union permissions inside Application Services (`AD-12`); return `404` on out-of-scope tenant/client UUIDs and `403` on unauthorised in-scope mutations.
+- **`docs/security/RLS-POLICIES.md` (Stories 1.2, 2.1–5.5, 6.1):** Enforce `ENABLE` + `FORCE ROW LEVEL SECURITY` with fail-closed `NULLIF(current_setting('app.org_id', true), '')::uuid` policy on all **17** tenant tables (`memberships`, `client_accounts`, `properties`, `locations`, `site_zones`, `assets`, `asset_custody`, `inspection_templates`, `inspection_template_items`, `inspections`, `inspection_responses`, `maintenance_requests`, `work_orders`, `work_order_events`, `contractors`, `attachments`, `audit_events`); separate schema-owner DB role (`pai_owner`) from runtime non-owner role (`pai_app` with `NOBYPASSRLS` and `SELECT, INSERT` only on append-only tables); run `set_config('app.org_id', ?, true)` inside a transaction for HTTP requests and `TenantAware` jobs; run Pest tests against PostgreSQL 17 + PostGIS under `pai_app` (never SQLite or superuser).
+- **`docs/security/SECURITY.md` & `THREAT-MODEL.md` (Stories 1.10, 1.11, 2.3, 3.5, 3.9, 3.12, 4.3, 6.1, 6.2):** Enforce `finfo` magic-byte upload validation (`10 MB` max, `jpeg`/`png`/`webp`/`pdf` allowlist, `Content-Disposition: attachment` on non-images), 10-minute signed URLs gated by tenant + `client_scope`, 4-tier `RateLimiter` (`429 Retry-After`), pessimistic `lockForUpdate()` on work-order/inspection transitions, sanitized `DomainException` error envelopes, and the 5-vector tenant-isolation test matrix.
+- **`docs/security/ENV.md` & `DATA-PROTECTION.md` (Stories 2.3, 4.3, 5.5, 5.6, 6.3, 6.4, 6.6):** Keep `.env.example` placeholder-only; never expose secrets in `VITE_*` or logs; use isolated credentials (`BACKUP_R2_*`) for nightly `pg_dump` backups; enforce NDPA data minimisation (no IDs/biometrics, no residential tenant data, non-blocking optional GPS, outcome-only NIPOST postcode with mandatory disclaimer); and verify DSR/breach logging and retention settings before pilot onboarding.
 
 ### UX Design Requirements
 
@@ -198,7 +212,7 @@ So that no organisation can ever read or write another organisation's rows (FR-1
 **When** a user of A authenticates
 **Then** middleware resolves a `TenantContext` (organisation_id, user_id, role, client_scope) from the membership and issues `SET LOCAL app.org_id` inside the request transaction
 **And** a request body or query containing a forged `organisation_id` is ignored, and a model `creating` hook stamps the context value and aborts on conflict
-**And** all 16 tenant tables carry `ENABLE` + `FORCE ROW LEVEL SECURITY` with the `current_setting('app.org_id')::uuid` policy, the runtime role is a non-owner without `BYPASSRLS`, and a raw SQL cross-tenant query returns zero rows
+**And** all 17 tenant tables carry `ENABLE` + `FORCE ROW LEVEL SECURITY` with the `NULLIF(current_setting('app.org_id', true), '')::uuid` policy, the runtime role is a non-owner without `BYPASSRLS`, and a raw SQL cross-tenant query returns zero rows
 **And** ordered UUID primary keys (HasUuids) are used on every table (AD-6)
 
 ### Story 1.3: Authentication with Sanctum and membership resolution

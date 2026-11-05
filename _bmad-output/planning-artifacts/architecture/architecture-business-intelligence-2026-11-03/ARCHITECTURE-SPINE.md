@@ -16,6 +16,12 @@ sources:
   - docs/knowledge-base/architecture-decisions.md
   - docs/knowledge-base/data-model.md
   - docs/knowledge-base/api-conventions.md
+  - docs/security/AUTH.md
+  - docs/security/SECURITY.md
+  - docs/security/RLS-POLICIES.md
+  - docs/security/ENV.md
+  - docs/security/THREAT-MODEL.md
+  - docs/security/DATA-PROTECTION.md
   - AGENTS.md
 companions:
   - architecture-walkthrough.html
@@ -343,6 +349,7 @@ project/
     Isolation/           # 5-layer tenant isolation matrix
   docs-site/             # Docusaurus documentation site
   docs/knowledge-base/   # single source of truth architectural docs
+  docs/security/         # 6-document security & data protection foundation (AUTH, SECURITY, RLS-POLICIES, ENV, THREAT-MODEL, DATA-PROTECTION)
 ```
 
 ## Capability → Architecture Map

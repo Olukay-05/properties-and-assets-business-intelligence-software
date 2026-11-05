@@ -4,15 +4,18 @@ Target: **Hetzner (Germany) VPS** for the app · **Neon EU Central (Frankfurt)**
 
 ## 1. Database — Neon
 
-1. Create a Neon project in **EU Central (Frankfurt)**.
+1. Create a Neon project in **EU Central (Frankfurt)** (PostgreSQL 17 + PostGIS 3.5).
 2. Run the PostGIS spike (`docs/spikes/postgis-neon-verification.md`) and record the result.
 3. `dev` and `staging` use Neon **branches**; `production` uses a **separate Neon project**.
-4. Store the connection string as a CI secret / server `.env` — never commit it.
+4. Provision two separate PostgreSQL roles (`docs/security/RLS-POLICIES.md` §3):
+   - **`pai_owner`** (`DB_MIGRATION_USERNAME`): owns schema objects and runs `php artisan migrate` during CI/CD deployment only.
+   - **`pai_app`** (`DB_USERNAME`): non-owner runtime role with `NOSUPERUSER NOCREATEDB NOCREATEROLE NOBYPASSRLS` and no `UPDATE`/`DELETE` grants on append-only tables (`locations`, `asset_custody`, `work_order_events`, `audit_events`).
+5. Store connection strings as CI secrets / server `.env` (`0600` permissions) — never commit them (`docs/security/ENV.md`).
 
 ## 2. Application VPS — Hetzner
 
 1. Create a **Regular Performance** server (Nuremberg/Falkenstein), Ubuntu 24.04 LTS, 2–4 GB.
-2. Install: Nginx, PHP-FPM 8.3+, Composer, Node.js 20+, Supervisor, `git`, and the PostgreSQL client (`postgresql-client` for `pg_dump`).
+2. Runtime stack (`ARCHITECTURE-SPINE.md`): Docker container (`Caddy` reverse proxy + TLS + `php-fpm` 8.4 + queue workers + scheduler) or host-managed Nginx/Caddy + PHP-FPM 8.4+, Composer 2, Node.js 22+ (`pnpm`), Supervisor, `git`, and `postgresql-client-17` (for `pg_dump`).
 3. Firewall (UFW): allow **22, 80, 443** only.
 
 ## 3. Deploy the application
@@ -31,14 +34,14 @@ Target: **Hetzner (Germany) VPS** for the app · **Neon EU Central (Frankfurt)**
 
 ## 5. Object storage — Cloudflare R2
 
-1. Create a **private** bucket; configure S3-compatible credentials.
-2. Object keys namespaced `organisations/{org_id}/...`.
-3. All downloads go through **short-lived signed URLs** issued by the service layer after authorisation.
+1. Create a **private** bucket for runtime evidence and report exports; configure S3-compatible credentials (`AWS_*`).
+2. Object keys namespaced `organisations/{org_id}/clients/{client_id}/{owner_type}/{owner_id}/{uuid}.{ext}` (`AD-13`).
+3. All downloads go through **10-minute signed URLs** issued by `EvidenceService` / `ReportService` after tenant and `client_scope` authorisation (`docs/security/SECURITY.md` §4.7).
 
 ## 6. Backups
 
 - Neon point-in-time recovery (paid tier).
-- Nightly cron: `pg_dump` → R2 (independent, portable copy).
+- Nightly cron: `pg_dump` → **isolated Cloudflare R2 backup bucket using separate credentials (`BACKUP_R2_*`)** not accessible to the web runtime worker (`AD-20`, `docs/security/ENV.md` §3.4).
 
 ## 7. CI/CD — GitHub Actions
 

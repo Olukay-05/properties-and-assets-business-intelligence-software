@@ -8,17 +8,25 @@ Establish the technical and visual foundation every later epic builds on: a scaf
 
 ## Stories
 
-- Story 1.1: Greenfield scaffold — Laravel React starter kit with typed contract tooling
-- Story 1.2: Tenant context and RLS isolation infrastructure
-- Story 1.3: Authentication with Sanctum and membership resolution
-- Story 1.4: Role-ability policy foundation
+- Story 1.1: Greenfield scaffold — Laravel React starter kit with typed contract tooling (`docs/security/ENV.md`, `docs/security/SECURITY.md`)
+- Story 1.2: Tenant context and RLS isolation infrastructure (`docs/security/RLS-POLICIES.md`, `docs/security/THREAT-MODEL.md` T-01/T-04)
+- Story 1.3: Authentication with Sanctum and membership resolution (`docs/security/AUTH.md`, `docs/security/THREAT-MODEL.md` T-05)
+- Story 1.4: Role-ability policy foundation (`docs/security/AUTH.md` §9, `docs/security/RLS-POLICIES.md` §3, `docs/security/THREAT-MODEL.md` T-03)
 - Story 1.5: Design tokens in Tailwind @theme and base typography
 - Story 1.6: Core component library I — layout and content primitives
 - Story 1.7: Core component library II — interactive and field primitives
 - Story 1.8: Application shell — desktop header, mobile navigation, quick-task bar
-- Story 1.9: Operational states and editorial copy system
-- Story 1.10: Evidence service and signed-URL gateway
-- Story 1.11: Audit service and structured error envelope
+- Story 1.9: Operational states and editorial copy system (`docs/security/DATA-PROTECTION.md` §4.4 NIPOST disclaimer)
+- Story 1.10: Evidence service and signed-URL gateway (`docs/security/SECURITY.md` §4.7, `docs/security/RLS-POLICIES.md` §6.4, `docs/security/THREAT-MODEL.md` T-02/T-06)
+- Story 1.11: Audit service and structured error envelope (`docs/security/SECURITY.md` §4.9, `docs/security/DATA-PROTECTION.md` §4.5/§7.1, `docs/security/THREAT-MODEL.md` T-07)
+
+## Security Foundation References (`docs/security/`)
+
+Before implementing any story in Epic 1, the developer/agent must consult:
+- `docs/security/AUTH.md` — Authentication vs. authorisation, disabling open public self-registration (`Features::registration()`) in Story 1.3, migrating `users.id` / `sessions.user_id` to UUID (`AD-6`) in Story 1.2, 6-role union permissions, and `ClientScope` (`404` out-of-scope vs `403` unauthorised action).
+- `docs/security/RLS-POLICIES.md` — PostgreSQL `FORCE ROW LEVEL SECURITY` on all 17 tenant tables (`NULLIF(current_setting('app.org_id', true), '')::uuid`), separating schema-owner role (`pai_owner`) from runtime non-owner role (`pai_app` with `NOBYPASSRLS` and no `UPDATE`/`DELETE` on `locations`, `asset_custody`, `work_order_events`, `audit_events`), transaction-local `set_config('app.org_id', ?, true)` for Neon PgBouncer compatibility, and updating `phpunit.xml` / CI from SQLite to PostgreSQL 17 + PostGIS.
+- `docs/security/SECURITY.md` — Mandatory rules for AI coding agents, thin adapters (`AD-1`), 4-tier `RateLimiter` (`AD-22`), `finfo` magic-byte upload checks (`10 MB` cap, allowlist `jpeg`/`png`/`webp`/`pdf`), and exception sanitization.
+- `docs/security/ENV.md`, `docs/security/THREAT-MODEL.md`, and `docs/security/DATA-PROTECTION.md` — Environment variable rules, threat verification tests (`T-01`–`T-11`), and NDPA 2023 data minimisation/audit requirements.
 
 ## Requirements & Constraints
 

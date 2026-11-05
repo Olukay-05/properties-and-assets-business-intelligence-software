@@ -11,6 +11,17 @@ Operational source of truth for the **reduced MVP** (three workflows). AI coding
 | `architecture-decisions.md` | Confirmed decisions (D1–D10), invariants, stack |
 | `api-conventions.md` | REST API scope, versioning, OpenAPI, auth |
 
+## Security & Data Protection Foundation (`docs/security/`)
+
+| File | Holds |
+| --- | --- |
+| `../security/AUTH.md` | Authentication, onboarding model, session rules, 6-role union permissions, `ClientScope`, API auth |
+| `../security/SECURITY.md` | Mandatory secure coding rules for developers & AI agents, rate limiting, `finfo` upload checks, headers |
+| `../security/RLS-POLICIES.md` | PostgreSQL `FORCE RLS` policies, `pai_owner` vs `pai_app` DB roles, `SET LOCAL` pooling safety, 17-table matrix |
+| `../security/ENV.md` | Environment variables (`local`, `staging`, `production`), RustFS/R2 storage config, secret rotation |
+| `../security/THREAT-MODEL.md` | Assets, threat actors, prioritised threat scenarios (`T-01`–`T-11`), verified vs outstanding controls |
+| `../security/DATA-PROTECTION.md` | NDPA 2023 controller/processor roles, data minimisation, retention/deletion, sub-processors, breach workflow |
+
 ## Source-of-truth hierarchy
 
 1. `docs/development-plan-review.md` (Revision 2) — approved scope, decisions, roadmap, hosting.

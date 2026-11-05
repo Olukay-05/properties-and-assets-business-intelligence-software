@@ -2,7 +2,7 @@
 title: 'Greenfield scaffold — Laravel React starter kit with typed contract tooling'
 type: 'feature'
 created: '2026-11-03'
-status: 'in-review'
+status: 'done'
 route: 'dispatch'
 review_loop_iteration: 0
 context: []

@@ -37,6 +37,7 @@ This file preserves the *how* that belongs in a downstream architecture document
 - At the start of each request/job the app issues `SET LOCAL app.org_id = '<id>'` inside a transaction (per-transaction, so pooled connections are safe).
 - Queued jobs serialise `organisation_id` + acting `user_id` into the payload and re-establish tenant context in the worker; cron jobs iterate tenants and re-scope per tenant.
 - **Defense in depth:** app scoping *and* RLS must both hold; tests verify both.
+- **Security & Data Protection Documentation Foundation (`docs/security/`):** Operational and implementation rules for `FR-19`–`FR-23`, `NFR-5.1`, and `§6.1`–`§6.2` are governed by the six-document security suite: `docs/security/AUTH.md` (authentication, onboarding, 6-role union permissions, `ClientScope`), `docs/security/SECURITY.md` (secure coding standards and mandatory agent rules), `docs/security/RLS-POLICIES.md` (PostgreSQL `FORCE RLS` policies, `pai_owner` vs `pai_app` DB roles, 17-table isolation matrix), `docs/security/ENV.md` (environment variables and secrets management), `docs/security/THREAT-MODEL.md` (threat scenarios and verification tests), and `docs/security/DATA-PROTECTION.md` (NDPA 2023 controller/processor rules, data minimisation, retention, and 72-hour breach logging).
 
 ## Geospatial mechanism
 
