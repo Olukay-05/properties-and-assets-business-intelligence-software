@@ -341,9 +341,30 @@ So that the platform is reviewable and never leaks raw errors (FR-22 substrate, 
 **And** domain exceptions carry permanent snake_case codes rendered as `{ error: { code, message } }` on REST and mapped form errors on Inertia, with raw database exceptions sanitized to Sentry
 **And** structured JSON logs include org_id, user_id, request_id and never personal data or credentials
 
+### Story 1.12: CI isolation gate enforcement
+
+As a platform owner,
+I want the tenant-isolation suite to run in CI and fail the build when it is missing or red,
+So that the merge gate AGENTS.md §6 mandates is actually enforced from Epic 1 onward (NFR-1, AD-19).
+
+**Acceptance Criteria:**
+
+**Given** the `Isolation` suite and the PostGIS test database from Story 1.2
+**When** `composer ci:check` runs on a pull request
+**Then** the job provisions the database roles, runs `--testsuite=Isolation`, and fails if the suite reports zero tests or any failure
+**And** `ci:check` exits zero on a clean branch — the pre-existing PHPStan failures are resolved, so `phpstan analyse` reports no errors
+**And** `phpunit.xml` and the workflow agree on a single database port, with the authoritative source documented
+
 ## Epic 2: Property & Asset Registration (Workflow 1)
 
 An operations manager can onboard a client account, register properties with canonical GPS locations on the map, organise zones, register assets, and assign accountable custodians.
+
+**Isolation gate (applies to every story in this epic that creates or alters a tenant table):**
+the story is not complete until the table is
+- created with `TenantIsolation::enableTenantIsolation()` — never hand-written policy SQL,
+- covered in `tests/Isolation/` across the vectors available at that point (HTTP via a route that reads the table, service layer, raw SQL under `pai_app`, and forged-input negatives),
+- granted the minimum runtime privileges (append-only tables get `SELECT, INSERT` only), and
+- recorded as Verified in `docs/security/RLS-POLICIES.md` §8.1.
 
 ### Story 2.1: Client account service, migration, and REST endpoints
 
@@ -488,6 +509,8 @@ So that history is always consistent and never duplicated (FR-16, FR-8, AD-9).
 ## Epic 3: Inspection & Maintenance (Workflow 2)
 
 A site supervisor can run a checklist inspection on a phone with photo evidence and raise faults; a technician can receive, progress, and complete work orders with mandatory completion evidence.
+
+**Isolation gate (applies to every story in this epic that creates or alters a tenant table):** the story is not complete until the table is created with `TenantIsolation::enableTenantIsolation()` (never hand-written policy SQL), covered in `tests/Isolation/` across the vectors available at that point (HTTP via a route that reads the table, service layer, raw SQL under `pai_app`, forged-input negatives), granted the minimum runtime privileges (append-only tables get `SELECT, INSERT` only), and recorded as Verified in `docs/security/RLS-POLICIES.md` §8.1.
 
 ### Story 3.1: Inspection template service with row versioning
 
@@ -661,6 +684,8 @@ So that proof of work cannot be altered after the fact (FR-21, AD-11/13).
 
 An operations manager can compile a client-scoped proof-of-work report and export it as PDF and CSV, including an explicit zero-activity certification.
 
+**Isolation gate (applies to every story in this epic that creates or alters a tenant table):** the story is not complete until the table is created with `TenantIsolation::enableTenantIsolation()` (never hand-written policy SQL), covered in `tests/Isolation/` across the vectors available at that point (HTTP via a route that reads the table, service layer, raw SQL under `pai_app`, forged-input negatives), granted the minimum runtime privileges (append-only tables get `SELECT, INSERT` only), and recorded as Verified in `docs/security/RLS-POLICIES.md` §8.1.
+
 ### Story 4.1: Report read model — canonical ReportData aggregation service
 
 As an operations manager,
@@ -734,6 +759,8 @@ So that the document itself is proof of the service I'm paying for (FR-18, UX-DR
 ## Epic 5: Organisation Administration, Audit & NDPA Operations
 
 An organisation owner can manage memberships with multi-role sets and client scope, review the append-only audit trail, and execute NDPA data-protection workflows.
+
+**Isolation gate (applies to every story in this epic that creates or alters a tenant table):** the story is not complete until the table is created with `TenantIsolation::enableTenantIsolation()` (never hand-written policy SQL), covered in `tests/Isolation/` across the vectors available at that point (HTTP via a route that reads the table, service layer, raw SQL under `pai_app`, forged-input negatives), granted the minimum runtime privileges (append-only tables get `SELECT, INSERT` only), and recorded as Verified in `docs/security/RLS-POLICIES.md` §8.1.
 
 ### Story 5.1: Membership administration service — roles, client scope, last-owner guard
 
@@ -821,17 +848,19 @@ So that compliance actions take minutes, not projects (FR-23, UX-DR9).
 
 The platform passes the full tenant-isolation matrix, accessibility audit, backups/restore drill, observability setup, and NDPA pilot-readiness checklist — the gate before the first pilot customer.
 
-### Story 6.1: Tenant-isolation test matrix as a CI gate
+### Story 6.1: Tenant-isolation matrix audit and completion
 
 As a platform owner,
-I want the 5-vector isolation matrix for every core entity running in CI,
-So that no merge or deploy can ship a cross-tenant leak (NFR-1, AD-19).
+I want an audited, complete five-vector isolation matrix for every tenant table,
+So that Epic 6 certifies coverage that was built per-epic rather than creating it from scratch (NFR-1, AD-19).
 
 **Acceptance Criteria:**
 
-**Given** all core entities (client_accounts, properties, locations, site_zones, assets, asset_custody, inspection_templates, inspections, maintenance_requests, work_orders, contractors, attachments, audit_events)
-**When** the matrix runs
-**Then** each entity is verified across HTTP requests, direct service calls, raw SQL, queued jobs, and signed URL generation — cross-tenant access is rejected and forged `organisation_id` headers/payloads are ignored
+**Given** the per-epic isolation coverage delivered through Epics 1–5
+**When** the audit runs
+**Then** every one of the 17 tenant tables has a row in the matrix, evidenced by a named passing test in `tests/Isolation/`
+**And** the two vectors that could not exist earlier — queued jobs (`TenantAware` middleware, AD-14) and signed-URL generation (AD-13) — are implemented and verified for every table that uses them
+**And** any table found without coverage fails the audit and is fixed in the same story
 **And** tests run against real PostgreSQL 17 + PostGIS as the non-owner role (never SQLite, never superuser), and the suite blocks merge/deploy on failure
 
 ### Story 6.2: Security hardening pass

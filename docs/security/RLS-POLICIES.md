@@ -219,8 +219,8 @@ No tenant-scoped entity may ship to production without passing the automated iso
 | 2. Cross-tenant write denial | **Verified** for `memberships` | RLS `WITH CHECK` rejects a row stamped for another tenant; the `creating` hook aborts before the query. Also verified that `pai_app` cannot UPDATE `users` (including `email`) or `organisations` at all |
 | 3. Forged `organisation_id` in payload | **Verified** | forged query parameter is ignored; `organisation_id` is not fillable on any tenant model |
 | 4. Raw SQL RLS (A, never-set, empty) | **Verified** | only A's rows when bound to A; zero rows both when `app.org_id` was **never set** (fresh connection, the `missing_ok` branch) and when it is `''` (the `NULLIF` branch) |
-| 5. Background job isolation | **Outstanding** — no `TenantAware` jobs exist yet (Story 6.1) | — |
-| 6. Signed URL isolation | **Outstanding** — no `attachments` yet (Story 6.1) | — |
+| 5. Background job isolation | **Outstanding** — no `TenantAware` jobs exist yet. Delivered per-epic from Epic 3, audited in Story 6.1 | — |
+| 6. Signed URL isolation | **Outstanding** — no `attachments` yet. Delivered per-epic from Epic 4, audited in Story 6.1 | — |
 | 7. Transaction-scoped setting | **Verified** (mechanism) | `StoreTenantContext` binding assertion; `set_config(..., true)` semantics |
 
 The `http vector` tests are mutation-checked: removing `ResolveTenantContext` from the `web` group makes them fail, so they cannot pass vacuously.

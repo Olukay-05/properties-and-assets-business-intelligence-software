@@ -18,6 +18,7 @@ development_status:
   1-9-operational-states-and-editorial-copy-system: backlog
   1-10-evidence-service-and-signed-url-gateway: backlog
   1-11-audit-service-and-structured-error-envelope: backlog
+  1-12-ci-isolation-gate-enforcement: backlog
   epic-1-retrospective: optional
 
   epic-2: backlog

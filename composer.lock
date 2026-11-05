@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "a84e530503e8095b32b53cd289fc07b3",
+    "content-hash": "b921ebaf9f3c6905f49b41f05c0798ce",
     "packages": [
         {
             "name": "aws/aws-crt-php",
@@ -9312,6 +9312,60 @@
             "published-time": "2026-10-20T16:41:46+00:00"
         },
         {
+            "name": "laravel/chisel",
+            "version": "dev-main",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/laravel/chisel.git",
+                "reference": "6a26297b0639d2b544af8faef53b92bb55f725a1"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/laravel/chisel/zipball/6a26297b0639d2b544af8faef53b92bb55f725a1",
+                "reference": "6a26297b0639d2b544af8faef53b92bb55f725a1",
+                "shasum": ""
+            },
+            "require": {
+                "illuminate/process": "^10.20|^11.0|^12.0|^13.0",
+                "nikic/php-parser": "^5.0",
+                "php": "^8.2"
+            },
+            "require-dev": {
+                "laravel/pint": "^1.24.0",
+                "pestphp/pest": "^4.1.0",
+                "phpstan/phpstan": "^2.1.26",
+                "rector/rector": "^2.1.7"
+            },
+            "default-branch": true,
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Laravel\\Chisel\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Taylor Otwell",
+                    "email": "taylor@laravel.com"
+                }
+            ],
+            "description": "Toolkit for building scripts that remove unwanted code, files, and dependencies.",
+            "keywords": [
+                "chisel",
+                "laravel"
+            ],
+            "support": {
+                "issues": "https://github.com/laravel/chisel/issues",
+                "source": "https://github.com/laravel/chisel/tree/main"
+            },
+            "time": "2026-10-14T13:51:11+00:00",
+            "published-time": "2026-10-14T13:51:17+00:00"
+        },
+        {
             "name": "laravel/pail",
             "version": "v1.2.7",
             "source": {
@@ -12152,7 +12206,9 @@
     ],
     "aliases": [],
     "minimum-stability": "stable",
-    "stability-flags": {},
+    "stability-flags": {
+        "laravel/chisel": 20
+    },
     "prefer-stable": true,
     "prefer-lowest": false,
     "platform": {
