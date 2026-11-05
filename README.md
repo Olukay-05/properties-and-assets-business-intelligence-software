@@ -40,6 +40,7 @@ php artisan key:generate
 # 3. Infrastructure (PostgreSQL 17 + PostGIS, and the S3-compatible store)
 docker compose up -d
 php artisan app:storage:init     # creates the bucket; safe to re-run
+php tools/create-test-database.php   # roles + test database; safe to re-run
 php artisan migrate
 
 # 4. Run
@@ -57,6 +58,32 @@ php artisan serve                # http://localhost:8000
 Images are pinned by digest in `docker-compose.yml` so the stack never changes
 silently. To upgrade a service, change the tag and digest together (instructions
 are in the file header).
+
+### Database roles and the test database
+
+The application never connects as a superuser. `docker compose up -d` creates
+the container superuser (`pai`) and the init script
+(`docker/postgres/init/01-create-roles.sh`) provisions the roles the
+application actually uses:
+
+| Role | Used by | Privileges |
+|---|---|---|
+| `pai_owner` | `php artisan migrate` only (`DB_MIGRATION_USERNAME`) | Owns tables and RLS policies. No superuser, no `BYPASSRLS`. |
+| `pai_app` | Web, API, queue, and the test suite (`DB_USERNAME`) | `NOBYPASSRLS`, owns nothing, so `FORCE ROW LEVEL SECURITY` applies to every query. |
+| `pai_bootstrap` | Nothing (cannot log in) | Owns only the pre-tenant membership lookup function; the only `BYPASSRLS` role. |
+
+The test suite runs against a **separate** database,
+`property_asset_intelligence_test`, so it can never touch development data.
+`php tools/create-test-database.php` creates it (and re-applies the schema
+grants on every run, so it is safe to repeat):
+
+```bash
+php tools/create-test-database.php   # safe to re-run
+php artisan test
+```
+
+If the test database is missing, the suite fails immediately with a single
+message naming the database and that command, rather than one error per test.
 
 ### Object storage
 

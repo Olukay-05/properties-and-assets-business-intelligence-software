@@ -37,11 +37,12 @@ The platform strictly separates **authentication** (who the actor is) from **aut
 | Area | Status | Reality in Codebase Today |
 | --- | --- | --- |
 | **Starter-kit Auth (`laravel/fortify`)** | **Implemented / Verified** | Installed (`laravel/fortify ^1.37.2`). Login, logout, password reset, email verification, 2FA, and passkey routes/tests ship from the starter kit (`tests/Feature/Auth/*` passes). |
-| **UUID Primary Keys on `users`** | **Outstanding (Conflict Identified)** | `database/migrations/0001_01_01_000000_create_users_table.php` currently uses integer `$table->id()`. Must be migrated to UUID (`HasUuids`) in Story 1.2 per `AD-6`. |
-| **Public Self-Registration** | **Outstanding (Requires Disabling/Gating)** | `config/fortify.php` currently enables `Features::registration()`, allowing uninvited public user creation without an organisation or membership. Must be disabled or restricted in Story 1.3. |
+| **UUID Primary Keys on `users`** | **Implemented (Story 1.2)** | `users.id` is a `uuid` primary key (`HasUuids`), and `sessions.user_id` / the tenant tables' `user_id` references are `uuid` (AD-6). Verified by the suite running against PostgreSQL. |
+| **Public Self-Registration** | **Implemented: disabled (Story 1.2)** | `Features::registration()` is removed from `config/fortify.php`, along with the register view, the `CreateNewUser` wiring and the registration test; the register link is gone from the welcome and login pages. Uninvited visitors cannot create a `users` row. |
+| **WebAuthn Passkeys** | **Implemented: removed (Story 1.2)** | `Features::passkeys()`, `PasskeyAuthenticatable`, the `passkeys` migration, the passkey components and the rate limiter are gone, per the approved decision in §5.4. TOTP 2FA remains. |
 | **Sanctum SPA & API Wiring** | **Outstanding** | `laravel/sanctum ^4.0` is installed in `composer.json`, but `statefulApi()`, `HasApiTokens`, and `/api/v1` routes are not wired yet (Story 1.3). |
-| **Organisations & Memberships** | **Outstanding** | `organisations` and `memberships` tables, models, and `TenantContext` resolution do not exist yet (Stories 1.2, 1.3, 5.1). |
-| **6-Role Policies & `ClientScope`** | **Outstanding** | `app/Domain/*/Policies` are empty `.gitkeep` folders; role union and `client_scope` enforcement are scheduled for Story 1.4 and Story 5.1. |
+| **Organisations & Memberships** | **Implemented (Story 1.2)** | `organisations` and `memberships` tables (UUID keys), models, factories and `TenantContext` resolution exist. A user's active membership is resolved on every authenticated request and binds `app.org_id` for PostgreSQL RLS. A user with no active membership is refused with `403`. |
+| **6-Role Policies & `ClientScope`** | **Outstanding** | `memberships.roles` stores and validates the six Phase 1 roles (`MembershipRole`), and `client_scope` is stored on the membership and exposed on `TenantContext`, but role abilities and `ClientScope` enforcement are scheduled for Story 1.4 and Story 5.1. |
 
 ---
 
@@ -96,7 +97,7 @@ The platform strictly separates **authentication** (who the actor is) from **aut
 - **Implemented:** The starter kit includes email verification (`MustVerifyEmail`), TOTP two-factor authentication (`TwoFactorAuthenticatable`), and WebAuthn passkeys (`PasskeyAuthenticatable` + `passkeys` migration).
 - **Decision (Approved 2026-11-05):**
   - **Keep TOTP 2FA (`Features::twoFactorAuthentication()`):** Retain TOTP 2FA as an optional account security hardening feature (and recommended for `Organisation owner` and `Platform admin` accounts per `docs/updates.md` §14). Its columns (`two_factor_secret`, `two_factor_recovery_codes`, `two_factor_confirmed_at`) live directly on `users` with zero extra table overhead.
-  - **Disable WebAuthn Passkeys (`Features::passkeys()`) for Phase 1:** Remove `Features::passkeys()` from `config/fortify.php`, remove `PasskeyAuthenticatable` from `App\Models\User`, and drop `2024_01_01_000000_create_passkeys_table.php` in Story 1.2 / Story 1.3 to avoid unnecessary RP-ID/device friction on shared or mid-range Android field devices during the MVP.
+  - **Disable WebAuthn Passkeys (`Features::passkeys()`) for Phase 1 — done in Story 1.2:** `Features::passkeys()` was removed from `config/fortify.php`, `PasskeyAuthenticatable` / `PasskeyUser` were removed from `App\Models\User`, `2024_01_01_000000_create_passkeys_table.php` was dropped, and the passkey components, actions and `well-known` route were removed. The `laravel/passkeys` package remains a hard dependency of `laravel/fortify`; it is simply not wired up. This avoids RP-ID/device friction on the shared and mid-range Android devices field technicians use during the MVP.
 
 ---
 
@@ -108,9 +109,9 @@ The platform strictly separates **authentication** (who the actor is) from **aut
   - Session lifetime: `120` minutes idle timeout (`SESSION_LIFETIME=120`).
   - Cookie attributes: `http_only = true`, `same_site = 'lax'`, `secure = true` in staging and production (`SESSION_SECURE_COOKIE=true`), and `serialization = 'json'` (preventing PHP object unserialization gadget-chain attacks).
 - **Implemented:** `config/session.php` sets `http_only => true`, `same_site => 'lax'`, `serialization => 'json'`, and `lifetime => 120`.
+- **Implemented (Story 1.2):** `sessions.user_id` is a `foreignUuid` column (AD-6). The `sessions` table remains a framework infrastructure table with no RLS policy, so session reads during authentication never depend on a bound tenant.
 - **Outstanding:**
   - Set `SESSION_ENCRYPT=true` in staging and production environments (`ENV.md`).
-  - Migrate `sessions.user_id` from integer `foreignId` to `foreignUuid` in Story 1.2 (`AD-6`).
 
 ---
 
@@ -122,7 +123,8 @@ The platform strictly separates **authentication** (who the actor is) from **aut
   - Access is controlled via `memberships.status` (e.g. `active`, `suspended`, `inactive`).
   - A user whose `memberships.status` is not `active` cannot authenticate into that Organisation (`Story 1.3`), and any active session or Sanctum token must be rejected by the Tenancy Middleware on the next request.
   - **Last-Owner Guard (`Story 5.1`):** Removing or suspending the last active `Organisation owner` membership in an Organisation is rejected with domain exception code `cannot_remove_last_organisation_owner`.
-- **Outstanding:** Implement `memberships.status` check in Tenancy Middleware (`Story 1.2` / `Story 1.3`) and last-owner guard in `MembershipService` (`Story 5.1`).
+- **Implemented (Story 1.2):** the tenancy middleware refuses any membership whose `status` is not `active`, and also refuses memberships in a suspended organisation, before any tenant query runs.
+- **Outstanding:** last-owner guard in `MembershipService` (`Story 5.1`).
 
 ---
 
@@ -134,7 +136,8 @@ The platform strictly separates **authentication** (who the actor is) from **aut
   - On every request, Tenancy Middleware resolves the user's active membership from the authenticated session, initializes the immutable `TenantContext` singleton (`organisation_id`, `user_id`, `roles`, `client_scope`), opens a database transaction, and executes `SET LOCAL app.org_id = '<organisation_id>'`.
   - **Hard Rule:** `organisation_id` is never accepted from request bodies, query strings, headers, or route parameters to select or switch tenant ownership.
   - **Multi-Organisation Users:** In Phase 1, each FM company is an independent tenant. If a user (such as a `Platform admin` performing audited support per `AD-4`) holds memberships in more than one Organisation, the active membership ID is stored in the server-side session and verified against `memberships` (`WHERE user_id = :auth_user_id AND status = 'active'`) before binding `TenantContext`.
-- **Outstanding:** Implement `TenantContext` and Tenancy Middleware in Story 1.2 and Story 1.3.
+- **Implemented (Story 1.2):** `App\Infrastructure\Tenancy\ResolveTenantContext` (middleware alias `tenant`, appended to the `web` group) calls `TenantContextService::resolveFor()`, binds the immutable `TenantContext`, and wraps the request in a transaction bound to that tenant. Users with more than one active membership must have an active membership selected in the session (`tenancy.active_membership_id`), which is re-verified against the resolved membership list on every request — a stale or forged value is refused rather than falling back to another tenant.
+- **Outstanding:** membership selection UI for multi-organisation users (Platform Admin support flow) belongs to Story 5.1.
 
 ---
 

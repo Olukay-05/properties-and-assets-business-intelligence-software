@@ -1,5 +1,6 @@
 export type User = {
-    id: number;
+    // UUID primary key (AD-6): users.id is a uuid, not an integer.
+    id: string;
     name: string;
     email: string;
     avatar?: string;
@@ -15,16 +16,6 @@ export type User = {
 export type Auth = {
     user: User;
 };
-
-/* @chisel-passkeys */
-export type Passkey = {
-    id: number;
-    name: string;
-    authenticator: string | null;
-    created_at_diff: string;
-    last_used_at_diff: string | null;
-};
-/* @end-chisel-passkeys */
 
 /* @chisel-2fa */
 export type TwoFactorSetupData = {

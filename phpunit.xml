@@ -3,6 +3,7 @@
          xsi:noNamespaceSchemaLocation="vendor/phpunit/phpunit/phpunit.xsd"
          bootstrap="vendor/autoload.php"
          colors="true"
+         cacheDirectory=".phpunit.cache"
 >
     <testsuites>
         <testsuite name="Unit">
@@ -10,6 +11,9 @@
         </testsuite>
         <testsuite name="Feature">
             <directory>tests/Feature</directory>
+        </testsuite>
+        <testsuite name="Isolation">
+            <directory>tests/Isolation</directory>
         </testsuite>
     </testsuites>
     <source>
@@ -23,14 +27,40 @@
         <env name="BCRYPT_ROUNDS" value="4"/>
         <env name="BROADCAST_CONNECTION" value="null"/>
         <env name="CACHE_STORE" value="array"/>
-        <env name="DB_CONNECTION" value="sqlite"/>
-        <env name="DB_DATABASE" value=":memory:"/>
-        <env name="DB_URL" value=""/>
         <env name="MAIL_MAILER" value="array"/>
         <env name="QUEUE_CONNECTION" value="sync"/>
         <env name="SESSION_DRIVER" value="array"/>
         <env name="PULSE_ENABLED" value="false"/>
         <env name="TELESCOPE_ENABLED" value="false"/>
         <env name="NIGHTWATCH_ENABLED" value="false"/>
+
+        <!--
+            The suite runs against real PostgreSQL 17 + PostGIS, never SQLite
+            and never the container superuser (AD-19).
+
+              DB_*              runtime role `pai_app` (NOBYPASSRLS, owns nothing)
+                                -> every query in the suite is subject to FORCE RLS.
+              DB_MIGRATION_*    schema owner `pai_owner` -> owns tables and policies.
+
+            The database is created by `php tools/create-test-database.php`.
+
+            Port: `DB_PORT` here is the LOCAL default (docker-compose publishes
+            Postgres on 5433 on the host). It is authoritative locally. CI's
+            service container listens on 5432 and sets DB_PORT in the workflow
+            env, which overrides this file; both sides are documented in
+            .github/workflows/tests.yml.
+        -->
+        <env name="DB_CONNECTION" value="pgsql"/>
+        <env name="DB_HOST" value="127.0.0.1"/>
+        <env name="DB_PORT" value="5433"/>
+        <env name="DB_DATABASE" value="property_asset_intelligence_test"/>
+        <env name="DB_USERNAME" value="pai_app"/>
+        <env name="DB_PASSWORD" value="pai_app_local_only"/>
+        <env name="DB_APP_USERNAME" value="pai_app"/>
+        <env name="DB_APP_PASSWORD" value="pai_app_local_only"/>
+        <env name="DB_MIGRATION_USERNAME" value="pai_owner"/>
+        <env name="DB_MIGRATION_PASSWORD" value="pai_owner_local_only"/>
+        <env name="DB_URL" value=""/>
+        <env name="DB_SSLMODE" value="prefer"/>
     </php>
 </phpunit>

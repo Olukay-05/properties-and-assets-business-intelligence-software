@@ -1,25 +1,31 @@
 <?php
 
+use Tests\Isolation\IsolationTestCase;
+use Tests\TestCase;
+
 /*
 |--------------------------------------------------------------------------
 | Pest configuration
 |--------------------------------------------------------------------------
 |
-| Binds every test in the Feature and Unit suites to the application TestCase,
-| so the Laravel container, HTTP test helpers and Inertia assertions are
-| available inside Pest closures.
+| Binds each suite to the application TestCase, so the Laravel container, HTTP
+| test helpers and Inertia assertions are available inside Pest closures.
 |
-| Feature tests run against SQLite in memory by default (see phpunit.xml).
-| Database-backed suites (the tenant-isolation matrix, RLS behaviour) must run
-| against real PostgreSQL + PostGIS, which is wired in a later story.
+| Every suite runs against real PostgreSQL 17 + PostGIS under the non-owner
+| runtime role `pai_app` (phpunit.xml, AD-19). The Isolation suite uses its own
+| base case: it seeds two tenants and binds them explicitly, and it never
+| stubs or removes a scope, because it tests the isolation boundaries.
 |
 */
 
-pest()->extend(Tests\TestCase::class)
-    ->in('Feature', 'Isolation');
+pest()->extend(TestCase::class)
+    ->in('Feature');
 
-pest()->extend(Tests\TestCase::class)
+pest()->extend(TestCase::class)
     ->in('Unit');
+
+pest()->extend(IsolationTestCase::class)
+    ->in('Isolation');
 
 /*
 |--------------------------------------------------------------------------

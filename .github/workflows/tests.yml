@@ -13,6 +13,43 @@ jobs:
   ci:
     runs-on: ubuntu-latest
 
+    services:
+      # Same database engine as production (AD-19): PostgreSQL 17 with PostGIS.
+      # The suite never falls back to SQLite or a superuser connection.
+      postgres:
+        image: postgis/postgis:17-3.5
+        env:
+          POSTGRES_DB: property_asset_intelligence_test
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d property_asset_intelligence_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      # This env block is authoritative in CI and overrides the local defaults in
+      # phpunit.xml: the service container publishes Postgres on 5432, while
+      # phpunit.xml pins 5433 for the local docker-compose stack. Change both
+      # together.
+      #
+      # Runtime role: non-owner, NOBYPASSRLS.
+      DB_CONNECTION: pgsql
+      DB_HOST: 127.0.0.1
+      DB_PORT: 5432
+      DB_DATABASE: property_asset_intelligence_test
+      DB_USERNAME: pai_app
+      DB_PASSWORD: pai_app_local_only
+      DB_APP_USERNAME: pai_app
+      DB_APP_PASSWORD: pai_app_local_only
+      # Schema owner: owns tables and policies, used only by `migrate`.
+      DB_MIGRATION_USERNAME: pai_owner
+      DB_MIGRATION_PASSWORD: pai_owner_local_only
+      DB_SSLMODE: prefer
+
     steps:
       - name: Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -22,7 +59,9 @@ jobs:
       - name: Setup PHP
         uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # v2
         with:
-          php-version: '8.3'
+          # composer.json requires ^8.4
+          php-version: '8.4'
+          extensions: pdo, pdo_pgsql, mbstring, fileinfo, intl, zip, gd
           tools: composer:v2
           coverage: none
 
@@ -31,8 +70,34 @@ jobs:
         with:
           node-version: '22'
 
-      - name: Setup Application
-        run: composer setup
+      - name: Install PHP dependencies
+        run: composer install --no-interaction --no-progress
+
+      - name: Prepare environment file
+        run: |
+          cp .env.example .env
+          php artisan key:generate
+
+      - name: Provision database roles
+        # Creates pai_owner, pai_app and pai_bootstrap. The runtime role is
+        # NOBYPASSRLS; only the pre-tenant lookup function owner bypasses RLS.
+        # This must run before any migration, because the schema owner owns
+        # tables and cannot create roles itself.
+        run: php tools/create-test-database.php
+        env:
+          TEST_DB_HOST: 127.0.0.1
+          TEST_DB_PORT: 5432
+          ADMIN_DB_DATABASE: property_asset_intelligence_test
+          ADMIN_DB_USERNAME: postgres
+          ADMIN_DB_PASSWORD: postgres
+          PAI_OWNER_PASSWORD: pai_owner_local_only
+          PAI_APP_PASSWORD: pai_app_local_only
+
+      - name: Install frontend dependencies
+        run: pnpm install
+
+      - name: Build frontend assets
+        run: pnpm run build
 
       - name: Run CI Checks
         run: composer ci:check

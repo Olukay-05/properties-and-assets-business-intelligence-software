@@ -2,10 +2,6 @@
 
 namespace App\Providers;
 
-/* @chisel-registration */
-
-use App\Actions\Fortify\CreateNewUser;
-/* @end-chisel-registration */
 use App\Actions\Fortify\ResetUserPassword;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
@@ -17,6 +13,14 @@ use Inertia\Inertia;
 use Laravel\Fortify\Features;
 use Laravel\Fortify\Fortify;
 
+/**
+ * Fortify wiring for Phase 1.
+ *
+ * Registration and passkeys are deliberately not wired (AUTH.md §4.1 and §5.4,
+ * decided 2026-11-05): there is no public tenant sign-up, and WebAuthn is too
+ * much friction on the shared field devices technicians use. Both are removed
+ * rather than hidden, so no route, view or rate limiter exposes them.
+ */
 class FortifyServiceProvider extends ServiceProvider
 {
     /**
@@ -43,9 +47,6 @@ class FortifyServiceProvider extends ServiceProvider
     private function configureActions(): void
     {
         Fortify::resetUserPasswordsUsing(ResetUserPassword::class);
-        /* @chisel-registration */
-        Fortify::createUsersUsing(CreateNewUser::class);
-        /* @end-chisel-registration */
     }
 
     /**
@@ -74,12 +75,6 @@ class FortifyServiceProvider extends ServiceProvider
         ]));
         /* @end-chisel-email-verification */
 
-        /* @chisel-registration */
-        Fortify::registerView(fn () => Inertia::render('auth/register', [
-            'passwordRules' => Password::defaults()->toPasswordRulesString(),
-        ]));
-        /* @end-chisel-registration */
-
         /* @chisel-2fa */
         Fortify::twoFactorChallengeView(fn () => Inertia::render('auth/two-factor-challenge'));
         /* @end-chisel-2fa */
@@ -105,13 +100,5 @@ class FortifyServiceProvider extends ServiceProvider
 
             return Limit::perMinute(5)->by($throttleKey);
         });
-
-        /* @chisel-passkeys */
-        RateLimiter::for('passkeys', function (Request $request) {
-            return Limit::perMinute(10)->by(
-                ($request->input('credential.id') ?: $request->session()->getId()).'|'.$request->ip(),
-            );
-        });
-        /* @end-chisel-passkeys */
     }
 }

@@ -11,10 +11,18 @@
 
 This document specifies how organisation-level and client-level data isolation works across PostgreSQL Row-Level Security (RLS), Laravel middleware, Eloquent global scopes, background jobs, and object storage.
 
-**Current Implementation Status (as of Story 1.1 Scaffold):**
+**Current Implementation Status (as of Story 1.2):**
 - **Requirement & Decision:** Fully specified and approved in `ARCHITECTURE-SPINE.md` (`AD-3`, `AD-4`, `AD-5`, `AD-8`, `AD-14`, `AD-19`) and `docs/knowledge-base/data-model.md`.
-- **Implemented in Code Today:** **Not yet implemented.** Only the starter-kit migrations (`users`, `password_reset_tokens`, `sessions`, `cache`, `jobs`, `passkeys`) exist in `database/migrations/`. None of the 17 tenant tables, RLS policies, `TenantContext` middleware, or non-owner PostgreSQL runtime roles have been created yet.
-- **Verified Today:** Local S3-compatible private bucket access denial (`403`) and pre-signed URL expiry are verified in `tests/Feature/StorageContractTest.php`. Database RLS and the 5-vector tenant-isolation test matrix are **Outstanding** (scheduled for **Story 1.2** and **Story 6.1**).
+- **Implemented in Code Today (Story 1.2)** — the isolation *mechanism*, plus RLS on the tenant tables this story creates:
+  - Three PostgreSQL roles provisioned outside migrations (`docker/postgres/init/01-create-roles.sh`, `tools/create-test-database.php`):
+    `pai` (container superuser, provisioning only), `pai_owner` (schema owner, owns every table and policy, **no** BYPASSRLS, used only by `artisan migrate`), `pai_app` (runtime role, `NOSUPERUSER NOBYPASSRLS`, owns nothing). A fourth, `pai_bootstrap`, exists solely to own the pre-tenant lookup function (§5.3).
+  - `organisations` (system identity, no RLS) and `memberships` (tenant table 1/17, `ENABLE` + `FORCE` RLS with the fail-closed policy).
+  - `app/Infrastructure/Database/TenantIsolation.php` — the single place the policy text is written; later stories call `enableTenantIsolation()`, never hand-written SQL.
+  - `app/Infrastructure/Tenancy/` — immutable request-scoped `TenantContext`, `TenantContextManager`, `TenantScope`, the `HasTenant` trait with the conflict-aborting `creating` hook, `ResolveTenantContext` middleware, `TenantContextService` (membership bootstrap) and `StoreTenantContext` (transaction-scoped binding).
+  - `users.id`, `sessions.user_id` migrated to UUID (AD-6); passkeys and public self-registration removed.
+  - Tests run against real PostgreSQL under the non-owner runtime role (`phpunit.xml`, `tests/TestCase.php`).
+- **Verified Today (Story 1.2):** `tests/Isolation/TenantIsolationTest.php` proves the HTTP, service-layer, raw-SQL and forged-input vectors, plus RLS/privilege state, all as `pai_app`. Local S3-compatible private bucket access denial (`403`) and pre-signed URL expiry remain verified in `tests/Feature/StorageContractTest.php`.
+- **Outstanding:** the remaining **16 tenant tables** (Epic 2–5) do not exist yet; each must adopt `enableTenantIsolation()` when it is created. Queued-job isolation (`TenantAware` jobs, AD-14) and signed-URL isolation are **Outstanding** for Story 6.1, because there are no jobs or attachments yet. `ClientScope` (AD-5) is Story 1.4.
 
 ---
 
@@ -52,7 +60,8 @@ Organisation-wide operational records also include `memberships`, `inspection_te
 
 | PostgreSQL Role | Used By | Privileges & Constraints |
 | --- | --- | --- |
-| **`pai_owner`** (Admin / Migration Role) | `php artisan migrate` during CI/CD deployment only (`DB_MIGRATION_USERNAME`). | Owns schema objects; executes `CREATE TABLE`, `ALTER TABLE ... ENABLE/FORCE ROW LEVEL SECURITY`, and `CREATE POLICY`. Never used by web, API, or queue workers at runtime. |
+| **`pai_owner`** (Admin / Migration Role) | `php artisan migrate` during CI/CD deployment only (`DB_MIGRATION_USERNAME`). | Owns schema objects; executes `CREATE TABLE`, `ALTER TABLE ... ENABLE/FORCE ROW LEVEL SECURITY`, and `CREATE POLICY`. It is `NOSUPERUSER NOBYPASSRLS`, so `FORCE ROW LEVEL SECURITY` binds it too: it cannot read tenant rows outside a bound tenant. Never used by web, API, or queue workers at runtime. |
+| **`pai_bootstrap`** (pre-tenant lookup identity) | Nothing connects as it (`NOLOGIN`). | `NOLOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE BYPASSRLS`, with `SELECT` on `memberships` and `organisations` only. Owns just the `SECURITY DEFINER` function `resolve_user_memberships()` (§5.3), the single pre-tenant read path. It must bypass RLS because `FORCE` also binds `pai_owner`; no other role does. |
 | **`pai_app`** (Application Runtime Role) | Web (`php-fpm`), REST API, Queue Workers, Scheduler, and Pest test suite (`DB_USERNAME`). | `NOSUPERUSER NOCREATEDB NOCREATEROLE NOBYPASSRLS`. Granted `SELECT, INSERT, UPDATE, DELETE` on standard tables, and **granted `SELECT, INSERT` ONLY (no `UPDATE` or `DELETE`)** on append-only history tables (`locations`, `asset_custody`, `work_order_events`, `audit_events`) per `AD-8`. |
 
 ---
@@ -71,10 +80,10 @@ Every table in the database belongs to one of three classifications (`AD-4`, `do
 
 | Table Name | Owning Module (`AD-2`) | Classification | `organisation_id` | `client_account_id` (`AD-5`) | RLS Enforced | Runtime `pai_app` Grants (`AD-8`) | Access & Isolation Considerations |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| `organisations` | Tenancy & Identity | System Identity | Primary Key (`id`) | No | No | `SELECT, INSERT, UPDATE` | Queried only for active membership resolution and org profile. |
-| `users` | Tenancy & Identity | System Identity | No (linked via `memberships`) | No | No | `SELECT, INSERT, UPDATE` | Global user identity (`HasUuids`). Never queryable across tenants directly by end users. |
+| `organisations` | Tenancy & Identity | System Identity | Primary Key (`id`) | No | No | `SELECT, INSERT` (**no `UPDATE`**) | Queried only for active membership resolution and the org profile. UPDATE is withheld: the table has no RLS, so an UPDATE grant would let one tenant rewrite another organisation's name or `status` — and `status` is exactly what the suspension check reads. Lifecycle changes run as the schema owner. |
+| `users` | Tenancy & Identity | System Identity | No (linked via `memberships`) | No | No | `SELECT, INSERT`, plus **column-level UPDATE** on `name`, `password`, `email_verified_at`, `remember_token` and the two-factor columns (**never `email`**) | Global user identity (`HasUuids`). `users` has no tenant key and no RLS, so a blanket UPDATE would let any tenant rewrite another tenant's user row. `email` is withheld because changing it redirects the password-reset flow (account takeover); the profile form rejects an address change during validation. Never queryable across tenants directly by end users. |
 | `personal_access_tokens` | Tenancy & Identity | System Identity | No (scoped to `tokenable_id`) | No | No | `SELECT, INSERT, UPDATE, DELETE` | Sanctum first-party tokens (`D3`). Tenant resolved via user's active membership after auth. |
-| `memberships` | Tenancy & Identity | **Tenant (1/17)** | **Yes (`NOT NULL`)** | Optional (`client_scope` JSONB array) | **`FORCE RLS`** | `SELECT, INSERT, UPDATE, DELETE` | Initial lookup during auth uses a security-definer helper or pre-RLS user lookup; all management queries run under `app.org_id` RLS. |
+| `memberships` | Tenancy & Identity | **Tenant (1/17)** | **Yes (`NOT NULL`)** | Optional (`client_scope` JSONB array) | **`FORCE RLS`** | `SELECT, INSERT, UPDATE, DELETE` | Initial lookup during auth uses the `resolve_user_memberships()` security-definer function (§5.3); all management queries run under `app.org_id` RLS. Indexed on `user_id` for that lookup. |
 | `client_accounts` | Registry | **Tenant (2/17)** | **Yes (`NOT NULL`)** | Primary Key (`id`) | **`FORCE RLS`** | `SELECT, INSERT, UPDATE` | Managed property owners inside the FM Organisation. Filtered by `id IN client_scope` when restricted. |
 | `properties` | Registry | **Tenant (3/17)** | **Yes (`NOT NULL`)** | **Yes (`NOT NULL`, immutable)** | **`FORCE RLS`** | `SELECT, INSERT, UPDATE` | Canonical `geom geometry(Point,4326)` guarded from mass-assignment (`AD-7`). Enforces `TenantScope` + `ClientScope`. |
 | `locations` | Registry | **Tenant (4/17)** | **Yes (`NOT NULL`)** | Via `property_id` (or denormalised) | **`FORCE RLS`** | **`SELECT, INSERT` ONLY** | Append-only coordinate history (`AD-7`, `AD-8`). No `UPDATE` or `DELETE` for `pai_app`. |
@@ -124,9 +133,14 @@ CREATE POLICY <table_name>_tenant_isolation_policy ON <table_name>
 - **`UPDATE` (`USING` + `WITH CHECK`):** Only current-tenant rows can be targeted (`USING`), and `organisation_id` cannot be mutated to another tenant's UUID (`WITH CHECK`).
 - **`DELETE` (`USING`):** Only current-tenant rows can be deleted (and on the 4 append-only tables `locations`, `asset_custody`, `work_order_events`, and `audit_events`, `DELETE` and `UPDATE` privileges are revoked from `pai_app` entirely).
 
-### 5.3 Resolving Initial Membership at Login (Bootstrap Path)
-Because `memberships` is itself one of the 17 RLS-protected tenant tables, how does the application resolve a user's membership on login before `app.org_id` is known?
-- **Decision:** Provide a narrow, read-only PostgreSQL `SECURITY DEFINER` function owned by `pai_owner` (e.g., `resolve_user_memberships(p_user_id uuid)`) with `SET search_path = public` that returns only `(membership_id, organisation_id, roles, client_scope, status)` for `WHERE user_id = p_user_id`, **or** add a specific `SELECT` policy on `memberships` allowing `user_id = NULLIF(current_setting('app.user_id', true), '')::uuid` during authentication lookup while keeping `INSERT`/`UPDATE`/`DELETE` strictly locked to `organisation_id = NULLIF(current_setting('app.org_id', true), '')::uuid`. This design must be finalized and tested in **Story 1.2**.
+### 5.3 Resolving Initial Membership at Login (Bootstrap Path) — Implemented 2026-11-05
+Because `memberships` is itself one of the 17 RLS-protected tenant tables, the application cannot read it before `app.org_id` is known — and `app.org_id` comes *from* a membership.
+
+- **Decision (resolved in Story 1.2):** a narrow, read-only `SECURITY DEFINER` function `resolve_user_memberships(p_user_id uuid)` that returns only `(membership_id, organisation_id, user_id, roles, client_scope, status)` for one user, joined to an **active** organisation. **No** `app.user_id` policy is added to `memberships`; its policy stays strictly tenant-scoped, so this function is genuinely the only pre-tenant read path.
+- **Ownership:** the function is owned by `pai_bootstrap`, a `NOLOGIN NOSUPERUSER NOBYPASSRLS`-except-`BYPASSRLS` role that exists for nothing else. It must hold `BYPASSRLS` because **`FORCE ROW LEVEL SECURITY` also applies to `pai_owner`** — `row_security = off` is rejected inside the function, and making `pai_owner` a bypasser would defeat the point of `FORCE`. `pai_bootstrap` therefore has `BYPASSRLS` plus `SELECT` on `memberships` and `organisations` only, and cannot log in.
+- **Hardening:** `SET search_path = public, pg_temp` pins name resolution; `EXECUTE` is revoked from `PUBLIC` and granted only to `pai_app`.
+- **Callers:** `TenantContextService::resolveFor()` (via `ResolveTenantContext` middleware). The user id always comes from the authenticated session.
+- **Verified:** `tests/Isolation/TenantIsolationTest.php` (`service layer` and `http vector` groups), against real PostgreSQL as `pai_app`.
 
 ---
 
@@ -141,6 +155,7 @@ Because `memberships` is itself one of the 17 RLS-protected tenant tables, how d
     3. Open a database transaction (`DB::beginTransaction()`).
     4. Execute `DB::statement("SELECT set_config('app.org_id', ?, true)", [$tenantContext->organisationId])` (which is equivalent to `SET LOCAL app.org_id = ?` and supports parameterized binding).
     5. Pass the request down the pipeline and commit (or roll back on exception) at the end of the request.
+  - **Implemented (Story 1.2):** `App\Infrastructure\Tenancy\ResolveTenantContext` (alias `tenant`, appended to the `web` group so it runs after `StartSession` and auth) resolves the membership and wraps the remaining pipeline in `App\Infrastructure\Tenancy\Actions\StoreTenantContext::handle()`, which opens the transaction and issues the parameterised `set_config('app.org_id', ?, true)`. A user with no membership, or no **active** membership, receives `403` before any tenant query runs.
   - Because `set_config(..., true)` / `SET LOCAL` is strictly scoped to the current transaction, PostgreSQL automatically clears `app.org_id` the instant the transaction commits or rolls back. A pooled connection can **never** leak tenant context into a subsequent request.
 
 ### 6.2 Application-Layer Defense in Depth (`TenantScope` & `ClientScope`)
@@ -193,4 +208,22 @@ No tenant-scoped entity may ship to production without passing the automated iso
 5. **Background Job Isolation:** A queued `TenantAware` job dispatched by Organisation A cannot read or mutate Organisation B's records, and worker memory does not retain Organisation A's `TenantContext` when the next job runs.
 6. **File Download & Signed URL Isolation:** User in Organisation A (or User in Organisation A restricted to Client Account 1) cannot request a pre-signed download URL for an `Attachment` belonging to Organisation B (or Client Account 2).
 7. **Connection Pool / Transaction Cleanup:** After a request transaction commits or rolls back, a subsequent query on the same database connection outside a tenant transaction has `current_setting('app.org_id', true)` empty/null and returns zero tenant rows.
+
+### 8.1 Coverage of This Gate Today (Story 1.2)
+
+`memberships` is the only tenant table that exists, so it is the only row of the matrix that can be exercised. Status is stated honestly per vector:
+
+| Vector | Status | Evidence |
+| --- | --- | --- |
+| 1. Cross-tenant read denial (HTTP, service) | **Verified** for `memberships` | `tests/Isolation/TenantIsolationTest.php`: the `http vector` group drives a real authenticated request whose JSON body is read through the tenant layer (asserting A's rows are present and B's absent); the `service layer` and `raw SQL` groups cover the other paths |
+| 2. Cross-tenant write denial | **Verified** for `memberships` | RLS `WITH CHECK` rejects a row stamped for another tenant; the `creating` hook aborts before the query. Also verified that `pai_app` cannot UPDATE `users` (including `email`) or `organisations` at all |
+| 3. Forged `organisation_id` in payload | **Verified** | forged query parameter is ignored; `organisation_id` is not fillable on any tenant model |
+| 4. Raw SQL RLS (A, never-set, empty) | **Verified** | only A's rows when bound to A; zero rows both when `app.org_id` was **never set** (fresh connection, the `missing_ok` branch) and when it is `''` (the `NULLIF` branch) |
+| 5. Background job isolation | **Outstanding** — no `TenantAware` jobs exist yet (Story 6.1) | — |
+| 6. Signed URL isolation | **Outstanding** — no `attachments` yet (Story 6.1) | — |
+| 7. Transaction-scoped setting | **Verified** (mechanism) | `StoreTenantContext` binding assertion; `set_config(..., true)` semantics |
+
+The `http vector` tests are mutation-checked: removing `ResolveTenantContext` from the `web` group makes them fail, so they cannot pass vacuously.
+
+Every tenant table added in Epics 2–5 must extend this matrix with its own row before it ships.
 

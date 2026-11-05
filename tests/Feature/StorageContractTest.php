@@ -1,5 +1,7 @@
 <?php
 
+use Illuminate\Support\Facades\Storage;
+
 /*
 |--------------------------------------------------------------------------
 | Object storage contract tests
@@ -31,9 +33,9 @@ beforeEach(function () {
         $this->markTestSkipped('No S3-compatible endpoint configured.');
     }
 
-    $this->disk = Illuminate\Support\Facades\Storage::disk('s3');
-    $this->key = 'tests/' . uniqid('evidence-', true) . '.txt';
-    $this->contents = 'evidence-' . bin2hex(random_bytes(8));
+    $this->disk = Storage::disk('s3');
+    $this->key = 'tests/'.uniqid('evidence-', true).'.txt';
+    $this->contents = 'evidence-'.bin2hex(random_bytes(8));
 });
 
 afterEach(function () {

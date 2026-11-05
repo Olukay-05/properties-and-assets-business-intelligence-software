@@ -2,8 +2,11 @@
 
 namespace Database\Factories;
 
+use App\Domain\Tenancy\Models\Membership;
+use App\Domain\Tenancy\Models\Organisation;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 
@@ -46,6 +49,32 @@ class UserFactory extends Factory
         return $this->state(fn (array $attributes) => [
             'email_verified_at' => null,
         ]);
+    }
+
+    /**
+     * Give the created user an active membership in a new organisation.
+     *
+     * A user without an active membership cannot open a tenant context, so any
+     * authenticated request is refused with 403 (Story 1.2). Tests that act as
+     * a user therefore need a real membership, exactly like a real user does.
+     */
+    public function withTenant(): static
+    {
+        return $this->afterCreating(function (User $user): void {
+            $organisation = Organisation::factory()->create();
+
+            // Fixtures write membership rows with the tenant bound at the
+            // database level only: FORCE RLS applies to the owner too, so an
+            // unbound insert would be rejected.
+            DB::transaction(function () use ($organisation, $user): void {
+                DB::select("select set_config('app.org_id', ?, true)", [$organisation->id]);
+
+                Membership::factory()
+                    ->forOrganisation($organisation)
+                    ->for($user)
+                    ->create();
+            });
+        });
     }
 
     /* @chisel-2fa */

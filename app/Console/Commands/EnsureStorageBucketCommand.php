@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
+use Illuminate\Filesystem\AwsS3V3Adapter;
 use Illuminate\Support\Facades\Storage;
 use Throwable;
 
@@ -33,7 +34,7 @@ final class EnsureStorageBucketCommand extends Command
         }
 
         try {
-            /** @var \Illuminate\Filesystem\AwsS3V3Adapter $driver */
+            /** @var AwsS3V3Adapter $driver */
             $driver = Storage::disk($disk);
             $client = $driver->getClient();
 

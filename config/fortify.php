@@ -119,9 +119,6 @@ return [
         /* @chisel-2fa */
         'two-factor' => 'two-factor',
         /* @end-chisel-2fa */
-        /* @chisel-passkeys */
-        'passkeys' => 'passkeys',
-        /* @end-chisel-passkeys */
     ],
 
     /*
@@ -137,24 +134,6 @@ return [
 
     'views' => true,
 
-    /* @chisel-passkeys */
-    /*
-    |--------------------------------------------------------------------------
-    | Passkeys
-    |--------------------------------------------------------------------------
-    |
-    | These settings configure Fortify's passkey (WebAuthn) support.
-    |
-    */
-
-    'passkeys' => [
-        'relying_party_id' => parse_url(config('app.url'), PHP_URL_HOST),
-        'allowed_origins' => [config('app.url')],
-        'user_handle_secret' => env('PASSKEYS_USER_HANDLE_SECRET', config('app.key')),
-        'timeout' => 60000,
-    ],
-    /* @end-chisel-passkeys */
-
     /*
     |--------------------------------------------------------------------------
     | Features
@@ -167,9 +146,14 @@ return [
     */
 
     'features' => [
-        /* @chisel-registration */
-        Features::registration(),
-        /* @end-chisel-registration */
+        /*
+         * Public self-registration is intentionally absent (AUTH.md §4.1,
+         * decided 2026-11-05): every user must belong to an FM organisation via
+         * an explicit `memberships` row, and Phase 1 has no public tenant
+         * sign-up. Accounts are provisioned by an audited administrative path
+         * (Story 1.3 / Story 5.1). An anonymous visitor therefore cannot
+         * create an orphan `users` record.
+         */
         Features::resetPasswords(),
         /* @chisel-email-verification */
         Features::emailVerification(),
@@ -181,11 +165,12 @@ return [
             // 'window' => 0
         ]),
         /* @end-chisel-2fa */
-        /* @chisel-passkeys */
-        Features::passkeys([
-            'confirmPassword' => true,
-        ]),
-        /* @end-chisel-passkeys */
+        /*
+         * WebAuthn passkeys are intentionally absent (AUTH.md §5.4, decided
+         * 2026-11-05): the RP-ID / device ceremony is unacceptable friction on
+         * the shared and mid-range Android devices field technicians use.
+         * TOTP 2FA above remains the second factor for Phase 1.
+         */
     ],
 
 ];

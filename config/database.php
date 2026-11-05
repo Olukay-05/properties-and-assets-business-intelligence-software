@@ -99,6 +99,67 @@ return [
             'sslmode' => env('DB_SSLMODE', 'prefer'),
         ],
 
+        /*
+        |----------------------------------------------------------------------
+        | Migrations connection (schema owner)
+        |----------------------------------------------------------------------
+        |
+        | `php artisan migrate` runs on this connection as `pai_owner`. It owns
+        | every table, every RLS policy and the SECURITY DEFINER bootstrap
+        | function. It is never used by web, API or queue code (AD-4).
+        |
+        | It is a separate connection rather than a mutation of `pgsql`, so the
+        | default connection keeps its own (runtime) credentials and nothing but
+        | the migrator can pick this one up. Both point at the same database and
+        | differ only in username/password.
+        |
+        */
+
+        'migrations' => [
+            'driver' => 'pgsql',
+            'url' => env('DB_URL'),
+            'host' => env('DB_HOST', '127.0.0.1'),
+            'port' => env('DB_PORT', '5432'),
+            'database' => env('DB_DATABASE', 'laravel'),
+            'username' => env('DB_MIGRATION_USERNAME', env('DB_USERNAME', 'pai_owner')),
+            'password' => env('DB_MIGRATION_PASSWORD', env('DB_PASSWORD', '')),
+            'charset' => env('DB_CHARSET', 'utf8'),
+            'prefix' => '',
+            'prefix_indexes' => true,
+            'search_path' => 'public',
+            'sslmode' => env('DB_SSLMODE', 'prefer'),
+        ],
+
+        /*
+        |----------------------------------------------------------------------
+        | Application runtime connection (`pai_app`)
+        |----------------------------------------------------------------------
+        |
+        | `DB_USERNAME`/`DB_PASSWORD` are the application runtime role: a
+        | non-owner with NOBYPASSRLS and no UPDATE/DELETE on append-only tables
+        | (AD-4, AD-8). It is identical to `pgsql` unless `DB_APP_USERNAME` is set,
+        | which lets a single environment carry both credentials explicitly.
+        |
+        | Migrations read the runtime role name from here to build GRANTs, so the
+        | role the suite verifies is the role the grants target.
+        |
+        */
+
+        'app' => [
+            'driver' => 'pgsql',
+            'url' => env('DB_URL'),
+            'host' => env('DB_HOST', '127.0.0.1'),
+            'port' => env('DB_PORT', '5432'),
+            'database' => env('DB_DATABASE', 'laravel'),
+            'username' => env('DB_APP_USERNAME', env('DB_USERNAME', 'pai_app')),
+            'password' => env('DB_APP_PASSWORD', env('DB_PASSWORD', '')),
+            'charset' => env('DB_CHARSET', 'utf8'),
+            'prefix' => '',
+            'prefix_indexes' => true,
+            'search_path' => 'public',
+            'sslmode' => env('DB_SSLMODE', 'prefer'),
+        ],
+
         'sqlsrv' => [
             'driver' => 'sqlsrv',
             'url' => env('DB_URL'),

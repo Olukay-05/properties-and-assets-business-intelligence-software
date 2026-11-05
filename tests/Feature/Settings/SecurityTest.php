@@ -3,7 +3,6 @@
 namespace Tests\Feature\Settings;
 
 use App\Models\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
 use Inertia\Testing\AssertableInertia as Assert;
 use Laravel\Fortify\Features;
@@ -11,8 +10,6 @@ use Tests\TestCase;
 
 class SecurityTest extends TestCase
 {
-    use RefreshDatabase;
-
     public function test_security_page_is_displayed()
     {
         $this->skipUnlessFortifyHas(Features::twoFactorAuthentication());
@@ -21,13 +18,8 @@ class SecurityTest extends TestCase
             'confirm' => true,
             'confirmPassword' => true,
         ]);
-        /* @chisel-passkeys */
-        Features::passkeys([
-            'confirmPassword' => true,
-        ]);
-        /* @end-chisel-passkeys */
 
-        $user = User::factory()->create();
+        $user = User::factory()->withTenant()->create();
 
         $this->actingAs($user)
             /* @chisel-password-confirmation */
@@ -36,10 +28,6 @@ class SecurityTest extends TestCase
             ->get(route('security.edit'))
             ->assertInertia(fn (Assert $page) => $page
                 ->component('settings/security')
-                /* @chisel-passkeys */
-                ->where('canManagePasskeys', true)
-                ->where('passkeys', [])
-                /* @end-chisel-passkeys */
                 ->where('canManageTwoFactor', true)
                 ->where('twoFactorEnabled', false),
             );
@@ -50,7 +38,7 @@ class SecurityTest extends TestCase
     {
         $this->skipUnlessFortifyHas(Features::twoFactorAuthentication());
 
-        $user = User::factory()->create();
+        $user = User::factory()->withTenant()->create();
 
         Features::twoFactorAuthentication([
             'confirm' => true,
@@ -70,7 +58,7 @@ class SecurityTest extends TestCase
 
         config(['fortify.features' => []]);
 
-        $user = User::factory()->create();
+        $user = User::factory()->withTenant()->create();
 
         $this->actingAs($user)
             /* @chisel-password-confirmation */
@@ -80,10 +68,6 @@ class SecurityTest extends TestCase
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
                 ->component('settings/security')
-                /* @chisel-passkeys */
-                ->where('canManagePasskeys', false)
-                ->where('passkeys', [])
-                /* @end-chisel-passkeys */
                 ->where('canManageTwoFactor', false)
                 ->missing('twoFactorEnabled')
                 ->missing('requiresConfirmation'),
@@ -92,7 +76,7 @@ class SecurityTest extends TestCase
 
     public function test_password_can_be_updated()
     {
-        $user = User::factory()->create();
+        $user = User::factory()->withTenant()->create();
 
         $response = $this
             ->actingAs($user)
@@ -112,7 +96,7 @@ class SecurityTest extends TestCase
 
     public function test_correct_password_must_be_provided_to_update_password()
     {
-        $user = User::factory()->create();
+        $user = User::factory()->withTenant()->create();
 
         $response = $this
             ->actingAs($user)

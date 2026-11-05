@@ -15,8 +15,9 @@ This document catalogues all environment variables required by the platform acro
 
 ### Implementation Status Summary
 - **Implemented & Verified in `.env.example` / `config/*.php`:** Core Laravel app, PostgreSQL (`DB_*`), database session/cache/queue, mail, S3-compatible storage (`AWS_*` pointing to local RustFS in `docker-compose.yml`), and `EVIDENCE_SIGNED_URL_TTL_MINUTES=10`.
+- **Implemented (Story 1.2):** separate schema-owner credentials (`DB_MIGRATION_USERNAME` / `DB_MIGRATION_PASSWORD`) consumed by the dedicated `migrations` connection, so the runtime role `pai_app` never executes DDL; optional explicit runtime-role overrides (`DB_APP_USERNAME` / `DB_APP_PASSWORD`); `DB_SSLMODE`; and the local-only container superuser (`POSTGRES_SUPERUSER` / `POSTGRES_SUPERUSER_PASSWORD`). The three roles (`pai_owner`, `pai_app`, `pai_bootstrap`) are created by `docker/postgres/init/01-create-roles.sh` on first boot, and in the test database by `php tools/create-test-database.php`.
+- **Verified (Story 1.2):** the full test suite runs against PostgreSQL as `pai_app` with no BYPASSRLS and no table ownership (`tests/Isolation/TenantIsolationTest.php`).
 - **Outstanding (Proposed for Upcoming Stories):**
-  - Separate migration-owner database credentials (`DB_MIGRATION_*`) so runtime connects as a non-owner `NOBYPASSRLS` role (`Story 1.2`, `AD-4`).
   - Isolated backup bucket variables (`BACKUP_R2_*`) for nightly `pg_dump` exports (`Story 6.3`, `AD-20`).
   - Sentry error tracking (`SENTRY_LARAVEL_DSN`, `VITE_SENTRY_DSN` — `Story 6.4`).
   - Map tile style URL override (`VITE_MAP_STYLE_URL` — `Story 2.4`, `AD-20`).
@@ -29,7 +30,7 @@ This document catalogues all environment variables required by the platform acro
 | Environment | Application Compute | Database (PostgreSQL 17 + PostGIS) | Object Storage (`s3` disk) | Secret Storage Location |
 | --- | --- | --- | --- | --- |
 | **Local (`local`)** | Native PHP 8.4+ (`php artisan serve` + `pnpm dev`) | Local Docker container (`postgis/postgis:17-3.5` on host port `5433`) | Local Docker container (`rustfs/rustfs:1.0.4` on host port `9000`) | Developer's untracked local `.env` file |
-| **Testing (`testing` / CI)** | GitHub Actions runner / Local Pest runner | PostgreSQL 17 + PostGIS service container (currently SQLite in `phpunit.xml` — **must be updated in Story 1.2**) | Local RustFS container (for `StorageContractTest` & `EvidenceService` tests) | GitHub Actions Secrets / CI workflow env |
+| **Testing (`testing` / CI)** | GitHub Actions runner / Local Pest runner | Dedicated database `property_asset_intelligence_test` on PostgreSQL 17 + PostGIS, owned by `pai_owner`, queried as `pai_app` (implemented in Story 1.2; `phpunit.xml` no longer uses SQLite) | Local RustFS container (for `StorageContractTest` & `EvidenceService` tests) | GitHub Actions Secrets / CI workflow env |
 | **Staging (`staging`)** | Staging Hetzner VPS (Germany) | Neon EU Central (Frankfurt) — isolated staging branch | Cloudflare R2 — private staging bucket | Server `/etc/...` or deployment `.env` (`0600` permissions) + GitHub Actions Environment Secrets |
 | **Production (`production`)** | Production Hetzner VPS (Germany) | Neon EU Central (Frankfurt) — separate paid project with PITR | Cloudflare R2 — private production bucket + separate isolated R2 backup bucket | Production VPS protected `.env` (`0600` permissions, owned by deploy/runtime user) + GitHub Actions Production Secrets |
 
@@ -60,11 +61,13 @@ This document catalogues all environment variables required by the platform acro
 | `DB_HOST` | Implemented | PostgreSQL hostname (`127.0.0.1` locally; Neon pooled endpoint `*-pooler.eu-central-1.aws.neon.tech` in staging/prod). | Required | All | No | `.env` / GitHub Secrets | No |
 | `DB_PORT` | Implemented | PostgreSQL port (`5433` locally for `docker-compose.yml`; `5432` on Neon). | Required | All | No | `.env` | No |
 | `DB_DATABASE` | Implemented | Database name (`property_asset_intelligence`). | Required | All | No | `.env` | No |
-| `DB_USERNAME` | Implemented (Role separation Outstanding) | **Application runtime database user (`pai_app`).** Must be a non-owner role with `NOBYPASSRLS` (`AD-4`) and no `UPDATE`/`DELETE` on append-only tables (`AD-8`). | Required | All | No (Identifier) | `.env` / GitHub Secrets | **NEVER** |
-| `DB_PASSWORD` | Implemented | Password for the runtime database user (`pai_app`). | **Required** | All | **YES (Critical)** | Local `.env`; VPS `.env` / GitHub Secrets | **NEVER** |
+| `DB_USERNAME` | **Implemented & Verified (Story 1.2)** | **Application runtime database user (`pai_app`).** Non-owner role with `NOBYPASSRLS` (AD-4) and no `UPDATE`/`DELETE` on append-only tables (AD-8). Verified by the isolation suite. | Required | All | No (Identifier) | `.env` / GitHub Secrets | **NEVER** |
+| `DB_PASSWORD` | **Implemented (Story 1.2)** | Password for the runtime database user (`pai_app`). | **Required** | All | **YES (Critical)** | Local `.env`; VPS `.env` / GitHub Secrets | **NEVER** |
+| `DB_APP_USERNAME` / `DB_APP_PASSWORD` | **Implemented (Story 1.2)** | Optional explicit runtime-role credentials for the `app` connection. Default to `DB_USERNAME` / `DB_PASSWORD`. Migrations read the role name from here when building `GRANT`s. | Optional | All | `DB_APP_PASSWORD`: **YES** | `.env` / GitHub Secrets | **NEVER** |
 | `DB_SSLMODE` | Implemented (`config/database.php`) | PostgreSQL SSL mode (`prefer` locally; **must be `require` or `verify-full` in staging and production** for Neon connections). | Required | Staging, Prod | No | `.env` | No |
-| `DB_MIGRATION_USERNAME` | **Proposed (Story 1.2)** | Administrative schema-owner database user (`pai_owner`) used **only** when running `php artisan migrate` or RLS policy DDL (`AD-4`). | Required (from Story 1.2) | All | No (Identifier) | Local `.env`; CI/CD deploy secrets | **NEVER** |
-| `DB_MIGRATION_PASSWORD` | **Proposed (Story 1.2)** | Password for the schema-owner database user (`pai_owner`). | **Required (from Story 1.2)** | All | **YES (Critical)** | Local `.env`; CI/CD deploy secrets (avoid storing on web worker if migrations run from CI/deploy step) | **NEVER** |
+| `DB_MIGRATION_USERNAME` | **Implemented (Story 1.2)** | Administrative schema-owner database user (`pai_owner`) used **only** by the `migrations` connection (`php artisan migrate`) and RLS policy DDL (AD-4). The migrator is pinned to this connection by `TenancyServiceProvider`, so `php artisan migrate` never runs as the runtime role. | Required | All | No (Identifier) | Local `.env`; CI/CD deploy secrets | **NEVER** |
+| `DB_MIGRATION_PASSWORD` | **Implemented (Story 1.2)** | Password for the schema-owner database user (`pai_owner`). | **Required** | All | **YES (Critical)** | Local `.env`; CI/CD deploy secrets (avoid storing on the web worker when migrations run from CI/deploy) | **NEVER** |
+| `POSTGRES_SUPERUSER` / `POSTGRES_SUPERUSER_PASSWORD` | **Implemented (Story 1.2, local only)** | Container-superuser credentials for the local `pai-postgres` service. Provisioning only: neither the application nor migrations use them. Never set outside local development. | Optional (local) | Local | `POSTGRES_SUPERUSER_PASSWORD`: **YES** | Untracked local `.env` | **NEVER** |
 
 ### 3.3 Authentication & Session Security (`config/session.php`, `config/auth.php`, `config/fortify.php`)
 
