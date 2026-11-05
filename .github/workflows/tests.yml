@@ -31,10 +31,19 @@ jobs:
           --health-retries 10
 
     env:
-      # This env block is authoritative in CI and overrides the local defaults in
-      # phpunit.xml: the service container publishes Postgres on 5432, while
-      # phpunit.xml pins 5433 for the local docker-compose stack. Change both
-      # together.
+      # AUTHORITATIVE PORT SOURCE FOR CI: DB_PORT, below.
+      #
+      # Every consumer in this job reads it, so the service container, the role
+      # provisioning step and phpunit.xml (via DB_PORT) cannot drift apart:
+      #   - the postgres service publishes 5432:5432;
+      #   - phpunit.xml pins 5433 for the LOCAL docker-compose stack, and this
+      #     env block overrides that value in CI;
+      #   - tools/create-test-database.php reads TEST_DB_PORT and TEST_DB_HOST,
+      #     passed below as env.DB_PORT and env.DB_HOST. It does NOT read
+      #     DB_PORT or DB_HOST by itself.
+      #
+      # To move the port, change DB_PORT here and the `ports:` mapping above.
+      # phpunit.xml needs no change; it is the local default.
       #
       # Runtime role: non-owner, NOBYPASSRLS.
       DB_CONNECTION: pgsql
@@ -83,11 +92,14 @@ jobs:
         # NOBYPASSRLS; only the pre-tenant lookup function owner bypasses RLS.
         # This must run before any migration, because the schema owner owns
         # tables and cannot create roles itself.
+        # TEST_DB_PORT and TEST_DB_HOST are taken from DB_PORT and DB_HOST so
+        # this script and the test connection can never disagree about which
+        # server they are talking to.
         run: php tools/create-test-database.php
         env:
-          TEST_DB_HOST: 127.0.0.1
-          TEST_DB_PORT: 5432
-          ADMIN_DB_DATABASE: property_asset_intelligence_test
+          TEST_DB_HOST: ${{ env.DB_HOST }}
+          TEST_DB_PORT: ${{ env.DB_PORT }}
+          ADMIN_DB_DATABASE: ${{ env.DB_DATABASE }}
           ADMIN_DB_USERNAME: postgres
           ADMIN_DB_PASSWORD: postgres
           PAI_OWNER_PASSWORD: pai_owner_local_only

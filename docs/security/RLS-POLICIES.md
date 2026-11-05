@@ -227,3 +227,21 @@ The `http vector` tests are mutation-checked: removing `ResolveTenantContext` fr
 
 Every tenant table added in Epics 2–5 must extend this matrix with its own row before it ships.
 
+### 8.2 CI Enforcement (Story 1.12)
+
+`composer ci:check` now invokes an `isolation` script — `@db:setup`, then `php artisan test --testsuite=Isolation` — **before** the general suite, so a cross-tenant leak is reported first rather than behind a lint nit.
+
+**What actually makes the gate non-vacuous.** A suite that runs zero tests must fail the build. Measurement on this repository shows the runner already does this: `php artisan test` against a suite with no test files prints "No tests found." and exits **1**, and bare `phpunit` with a present-but-empty directory also exits **1** — in both cases *with or without* `failOnEmptyTestSuite="true"`. So the attribute in `phpunit.xml` is belt and braces, not the mechanism. The guarantee is pinned behaviourally by `tests/Gate/CiIsolationGateTest.php`, which runs a real suite and asserts a non-zero exit code, instead of asserting that a config string is present.
+
+| Control | Implementation | Evidence |
+| --- | --- | --- |
+| The suite actually runs | `isolation` script, invoked as `@isolation` in `ci:check` before `@test` | `Gate` test; mutation-verified by removing `@isolation` |
+| Zero tests cannot pass | Runner exits 1 on an empty suite; `failOnEmptyTestSuite="true"` as belt and braces | `Gate` test runs an empty suite and asserts exit ≠ 0 |
+| The gate cannot be silently unhooked | `Gate` testsuite asserts the `Isolation` testsuite entry, real `*Test.php` files, a minimum case count, and the `ci:check` wiring | `Gate` suite, 6 tests, no database required |
+| The build can reach the gate | `--memory-limit=1G` pinned in the `types:check` script | `composer types:check` exits 0 at PHP's 128M default |
+| One database port in CI | Workflow `DB_PORT` is authoritative; provisioning reads it through `TEST_DB_PORT`/`TEST_DB_HOST`; `phpunit.xml` is the local authority | workflow comment and `phpunit.xml` comment |
+
+> **Verification status:** the wiring, the `Gate` suite, the mutation proofs and the PHPStan repair were verified on a developer machine. The end-to-end `composer ci:check` run against a live PostgreSQL 17 + PostGIS service was **not** executed during Story 1.12 (Docker was unavailable). The first CI run after merge confirms it.
+
+**Not covered in this story:** vectors 5 and 6 remain Outstanding for the reasons in §8.1 and are delivered per-epic. The `/api/v1` surface does not exist yet, so vector 1 is exercised through an Inertia route.
+

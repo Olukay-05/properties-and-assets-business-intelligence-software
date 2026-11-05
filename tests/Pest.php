@@ -1,5 +1,6 @@
 <?php
 
+use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
 use Tests\Isolation\IsolationTestCase;
 use Tests\TestCase;
 
@@ -26,6 +27,14 @@ pest()->extend(TestCase::class)
 
 pest()->extend(IsolationTestCase::class)
     ->in('Isolation');
+
+// The gate-configuration suite reads committed configuration (composer.json,
+// phpunit.xml, tests/Isolation) and runs the test runner to observe exit codes.
+// It uses the framework base case, which boots the app but registers no
+// database traits, so it runs without PostgreSQL: a guard that needed the
+// database could only report a broken gate after that database was available.
+pest()->extend(BaseTestCase::class)
+    ->in('Gate');
 
 /*
 |--------------------------------------------------------------------------

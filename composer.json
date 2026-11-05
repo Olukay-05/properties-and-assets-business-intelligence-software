@@ -73,14 +73,20 @@
         "types:transform": [
             "@php artisan types:transform"
         ],
+        "isolation": [
+            "Composer\\Config::disableProcessTimeout",
+            "@db:setup",
+            "@php artisan test --testsuite=Isolation"
+        ],
         "ci:check": [
             "Composer\\Config::disableProcessTimeout",
             "pnpm run check",
             "pnpm run types:check",
+            "@isolation",
             "@test"
         ],
         "types:check": [
-            "phpstan analyse"
+            "phpstan analyse --memory-limit=1G"
         ],
         "test": [
             "@php artisan config:clear --ansi",
