@@ -1,5 +1,5 @@
 generated: 11-03-2026 13:22
-last_updated: 11-05-2026 12:37
+last_updated: 11-05-2026 17:20
 project: business-intelligence
 project_key: business-intelligence
 tracking_system: file-system
@@ -18,7 +18,7 @@ development_status:
   1-9-operational-states-and-editorial-copy-system: backlog
   1-10-evidence-service-and-signed-url-gateway: backlog
   1-11-audit-service-and-structured-error-envelope: backlog
-  1-12-ci-isolation-gate-enforcement: backlog
+  1-12-ci-isolation-gate-enforcement: review
   epic-1-retrospective: optional
 
   epic-2: backlog

@@ -68,6 +68,18 @@ export default defineConfig({
             'composer.json',
             'resources/js/components/ui/*',
             'resources/views/mail/*',
+            // Documentation, planning artifacts and BMAD tooling are not
+            // application source. Several of these trees are generated or
+            // owned by other tools, so reformatting them churns files that
+            // will drift straight back, and it buried the isolation gate
+            // behind 94 non-code formatting failures. Lint already scopes
+            // itself to app source; formatting now matches.
+            'docs/**',
+            '_bmad/**',
+            '_bmad-output/**',
+            'AGENTS.md',
+            'README.md',
+            'docker-compose.yml',
         ],
         sortTailwindcss: {
             functions: ['clsx', 'cn', 'cva'],

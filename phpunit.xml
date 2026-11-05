@@ -4,7 +4,25 @@
          bootstrap="vendor/autoload.php"
          colors="true"
          cacheDirectory=".phpunit.cache"
+         failOnEmptyTestSuite="true"
 >
+    <!--
+        failOnEmptyTestSuite="true" is belt and braces, NOT the mechanism that
+        protects the isolation gate. Measured on this repository:
+
+          - `php artisan test` against a suite with no test files prints
+            "No tests found." and exits 1 with this attribute AND without it,
+            because the runner already treats a suite selection as an explicit
+            choice (PHPUnit Merger::hasExplicitTestSelection);
+          - bare `phpunit` with a present but empty suite directory also exits 1
+            either way;
+          - a directory that does not exist is a hard error (exit 2).
+
+        So the real zero test guarantee is behavioural and is pinned by
+        tests/Gate/CiIsolationGateTest.php, which runs a suite and asserts the
+        exit code. This attribute stays because it makes the intent explicit and
+        covers a runner invocation that selects nothing at all.
+    -->
     <testsuites>
         <testsuite name="Unit">
             <directory>tests/Unit</directory>
@@ -14,6 +32,12 @@
         </testsuite>
         <testsuite name="Isolation">
             <directory>tests/Isolation</directory>
+        </testsuite>
+        <!-- Guards the gate's own wiring and zero-test behaviour: reads
+             composer.json, phpunit.xml and tests/Isolation and runs the
+             suite, and needs no database. -->
+        <testsuite name="Gate">
+            <directory>tests/Gate</directory>
         </testsuite>
     </testsuites>
     <source>

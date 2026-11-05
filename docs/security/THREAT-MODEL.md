@@ -74,7 +74,8 @@ Threats are prioritised by **Risk Level** (**Critical** → **High** → **Mediu
 - **Assets affected:** `A-1`, `A-2`, `A-3`, `A-4`, `A-6`, `A-10`.
 - **Likely attack path:** (1) Changing a resource UUID in a web route or `/api/v1` endpoint when a developer forgets a `.where('organisation_id', ...)` clause; (2) Passing `"organisation_id": "<Org-B-UUID>"` in a POST/PATCH payload; (3) Using session-level `SET app.org_id` instead of transaction-local `SET LOCAL app.org_id` over Neon PgBouncer transaction pooling; or (4) Running the app under a PostgreSQL table-owner/superuser role that bypasses RLS.
 - **Potential business impact:** Catastrophic loss of customer trust, immediate pilot termination, contractual breach under the DPA, and NDPA 2023 regulatory reportable data breach.
-- **Existing controls (Verified):** None in the codebase yet (`database/migrations/` currently contains only starter-kit user/session/cache/job tables; `docker-compose.yml` currently connects as superuser `pai`).
+- **Existing controls (Verified):** Delivered by Story 1.2 and wired into CI by Story 1.12. `memberships` carries `ENABLE` + `FORCE ROW LEVEL SECURITY` via `TenantIsolation::enableTenantIsolation()`; the runtime role `pai_app` is `NOSUPERUSER NOBYPASSRLS` and owns nothing; `TenantContext` is resolved from the membership, never from input; requests bind `set_config('app.org_id', ?, true)` transaction-locally. `tests/Isolation/TenantIsolationTest.php` proves the HTTP, service-layer, raw-SQL and forged-input vectors under `pai_app` against PostgreSQL 17 + PostGIS. `composer ci:check` invokes an `isolation` script that runs that suite, and `tests/Gate/CiIsolationGateTest.php` (mutation-verified) fails the build if that wiring, the suite registration or the suite's substance is removed. See `RLS-POLICIES.md` §8.2.
+- **Status:** **Partially Verified.** RLS, tenant resolution, raw-SQL denial and the CI gate are in place. Still outstanding: the remaining **16 tenant tables** (each adopts `enableTenantIsolation()` in the epic that creates it), and the **queued-job** and **signed-URL** vectors, which have no infrastructure until Epics 3–4 and are audited in Story 6.1. `phpunit.xml` and `.github/workflows/tests.yml` already run PostgreSQL 17 + PostGIS, not SQLite.
 - **Required additional controls (`AD-3`, `AD-4`, `AD-6`, `AD-19`):**
   1. Resolve `TenantContext` strictly from the authenticated user's `memberships` row (`AD-3`).
   2. Enforce `TenantScope` on all 17 tenant models and stamp `organisation_id` via a `creating` hook that aborts on conflict (`AD-3`).
@@ -82,7 +83,6 @@ Threats are prioritised by **Risk Level** (**Critical** → **High** → **Mediu
   4. Connect at runtime as a non-owner PostgreSQL role (`pai_app`) with `NOBYPASSRLS` (`AD-4`).
   5. Wrap every request in a database transaction whose first statement is `set_config('app.org_id', ?, true)` (`SET LOCAL`) (`AD-4`).
 - **How the control should be tested:** Automated 5-vector isolation matrix (`tests/Isolation/`) running on real PostgreSQL 17 + PostGIS as `pai_app`, asserting cross-tenant denial across HTTP, service layer, raw SQL, queued jobs, and signed URLs, plus negative tests with forged `organisation_id` payloads.
-- **Current status & outstanding work:** **Outstanding** — Scheduled for **Story 1.2** (infrastructure) and **Story 6.1** (full CI gate). Also requires updating `phpunit.xml` and `.github/workflows/tests.yml` from SQLite to PostgreSQL 17 + PostGIS.
 
 ---
 
