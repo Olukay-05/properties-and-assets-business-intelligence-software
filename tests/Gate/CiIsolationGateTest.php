@@ -119,9 +119,35 @@ test('ci:check runs the isolation gate before the general suite', function () {
     expect($isolationAt)->not->toBeFalse('ci:check must invoke @isolation.');
     expect($testAt)->not->toBeFalse('ci:check must still invoke @test.');
 
-    // Fail the cheapest, most security-critical check first: a cross-tenant
-    // leak should never be reported behind a lint or formatting nit.
+    // The isolation gate must run before the general PHP suite, so a
+    // cross-tenant leak is reported ahead of unrelated PHP test failures.
+    // Note this does NOT put it first in ci:check: pnpm check and
+    // types:check still run before it.
     expect($isolationAt)->toBeLessThan($testAt);
+});
+
+test('CI runs the suite as the non-owner runtime role', function () {
+    // The isolation suite proves nothing if CI connects as a superuser or as
+    // the schema owner: FORCE RLS would still bind the owner, but a superuser
+    // bypasses RLS entirely and every assertion could pass vacuously. Pointing
+    // the workflow at postgres/postgres would leave this suite green while the
+    // tenant boundary was no longer being exercised (AGENTS.md §6, AD-4).
+    $workflow = gateRead('.github/workflows/tests.yml');
+
+    $expected = [
+        'DB_USERNAME' => 'pai_app',
+        'DB_MIGRATION_USERNAME' => 'pai_owner',
+        'DB_CONNECTION' => 'pgsql',
+    ];
+
+    foreach ($expected as $key => $value) {
+        expect(preg_match('/^\s*'.$key.':\s*'.preg_quote($value, '/').'\s*$/m', $workflow))
+            ->toBe(1, "CI must set {$key}: {$value} so the suite runs as the runtime role.");
+    }
+
+    // DB_URL would silently override every discrete DB_* value.
+    expect(preg_match('/^\s*DB_URL:\s*\S+/m', $workflow))
+        ->toBe(0, 'CI must not set DB_URL; it would override the role and port chosen above.');
 });
 
 test('phpstan is given enough memory to finish in CI', function () {

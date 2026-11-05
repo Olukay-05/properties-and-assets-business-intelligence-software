@@ -31,16 +31,20 @@ jobs:
           --health-retries 10
 
     env:
-      # AUTHORITATIVE PORT SOURCE FOR CI: DB_PORT, below.
+      # AUTHORITATIVE SOURCE for every database connection detail in this job.
       #
-      # Every consumer in this job reads it, so the service container, the role
-      # provisioning step and phpunit.xml (via DB_PORT) cannot drift apart:
-      #   - the postgres service publishes 5432:5432;
+      # Every consumer reads these, so nothing can drift apart:
+      #   - the postgres service publishes 5432:5432 and uses ADMIN_DB_*;
       #   - phpunit.xml pins 5433 for the LOCAL docker-compose stack, and this
       #     env block overrides that value in CI;
-      #   - tools/create-test-database.php reads TEST_DB_PORT and TEST_DB_HOST,
-      #     passed below as env.DB_PORT and env.DB_HOST. It does NOT read
-      #     DB_PORT or DB_HOST by itself.
+      #   - tools/create-test-database.php reads TEST_DB_*/DB_* and ADMIN_DB_*.
+      #
+      # ADMIN_DB_* and PAI_*_PASSWORD live at job level on purpose. The script
+      # runs twice: once as its own provisioning step, and again via
+      # `composer ci:check` -> `@isolation` -> `@db:setup`. Setting them per
+      # step left the second run falling back to the script's local defaults
+      # (`pai`/`secret`), which failed CI authentication. Job-level env is the
+      # only place every invocation sees them.
       #
       # To move the port, change DB_PORT here and the `ports:` mapping above.
       # phpunit.xml needs no change; it is the local default.
@@ -58,6 +62,14 @@ jobs:
       DB_MIGRATION_USERNAME: pai_owner
       DB_MIGRATION_PASSWORD: pai_owner_local_only
       DB_SSLMODE: prefer
+      # Superuser for role/database creation. Test-only: this is the
+      # throwaway service container, never a real environment. Run against
+      # DB_DATABASE, which the service container creates (POSTGRES_DB below).
+      ADMIN_DB_DATABASE: ${{ env.DB_DATABASE }}
+      ADMIN_DB_USERNAME: postgres
+      ADMIN_DB_PASSWORD: postgres
+      PAI_OWNER_PASSWORD: pai_owner_local_only
+      PAI_APP_PASSWORD: pai_app_local_only
 
     steps:
       - name: Checkout code
@@ -104,17 +116,11 @@ jobs:
         # This must run before any migration, because the schema owner owns
         # tables and cannot create roles itself.
         #
-        # Connection details come from the job's DB_* env. The script reads
-        # TEST_DB_* first and falls back to DB_*, so it reaches the same server
-        # whether it is invoked here or later by `composer ci:check` ->
-        # `@isolation` -> `@db:setup`, which has no TEST_DB_* of its own.
+        # Connection details and passwords come from the job-level env, which
+        # is the same set `composer ci:check` picks up when it re-runs this
+        # script through @isolation -> @db:setup. Nothing is restated here, so
+        # the two invocations cannot disagree.
         run: php tools/create-test-database.php
-        env:
-          ADMIN_DB_DATABASE: ${{ env.DB_DATABASE }}
-          ADMIN_DB_USERNAME: postgres
-          ADMIN_DB_PASSWORD: postgres
-          PAI_OWNER_PASSWORD: pai_owner_local_only
-          PAI_APP_PASSWORD: pai_app_local_only
 
       - name: Install frontend dependencies
         run: pnpm install

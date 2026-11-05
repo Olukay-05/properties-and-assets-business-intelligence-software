@@ -229,7 +229,7 @@ Every tenant table added in Epics 2–5 must extend this matrix with its own row
 
 ### 8.2 CI Enforcement (Story 1.12)
 
-`composer ci:check` now invokes an `isolation` script — `@db:setup`, then `php artisan test --testsuite=Isolation` — **before** the general suite, so a cross-tenant leak is reported first rather than behind a lint nit.
+`composer ci:check` now invokes an `isolation` script — `@db:setup`, then `php artisan test --testsuite=Isolation` — **before** `@test`. The frontend checks (`pnpm run check`, `pnpm run types:check`) still run first, so a failing isolation suite is not the very first thing reported; it is reported before the general PHP suite, and it fails the build either way.
 
 **What actually makes the gate non-vacuous.** A suite that runs zero tests must fail the build. Measurement on this repository shows the runner already does this: `php artisan test` against a suite with no test files prints "No tests found." and exits **1**, and bare `phpunit` with a present-but-empty directory also exits **1** — in both cases *with or without* `failOnEmptyTestSuite="true"`. So the attribute in `phpunit.xml` is belt and braces, not the mechanism. The guarantee is pinned behaviourally by `tests/Gate/CiIsolationGateTest.php`, which runs a real suite and asserts a non-zero exit code, instead of asserting that a config string is present.
 
