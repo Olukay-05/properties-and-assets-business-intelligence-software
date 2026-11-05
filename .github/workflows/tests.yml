@@ -79,6 +79,17 @@ jobs:
         with:
           node-version: '22'
 
+      - name: Enable pnpm
+        # `actions/setup-node` installs Node but not pnpm, so `pnpm install`
+        # failed with exit 127 ("pnpm: command not found") and the job never
+        # reached the isolation gate. Corepack ships with Node and reads the
+        # exact version pinned in package.json (`packageManager`), so CI and a
+        # developer machine get the same pnpm without a third-party action.
+        run: |
+          corepack enable
+          corepack prepare --activate
+          pnpm --version
+
       - name: Install PHP dependencies
         run: composer install --no-interaction --no-progress
 
