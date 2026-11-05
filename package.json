@@ -2,10 +2,6 @@
     "$schema": "https://www.schemastore.org/package.json",
     "private": true,
     "type": "module",
-    "packageManager": "pnpm@10.23.0",
-    "engines": {
-        "node": ">=20.19.0"
-    },
     "scripts": {
         "build": "vp build",
         "build:ssr": "vp build && vp build --ssr",
@@ -69,5 +65,9 @@
     },
     "overrides": {
         "vite": "npm:@voidzero-dev/vite-plus-core@1.4.0"
-    }
+    },
+    "engines": {
+        "node": ">=20.19.0"
+    },
+    "packageManager": "pnpm@10.23.0"
 }
